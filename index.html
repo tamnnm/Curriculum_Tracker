@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Tra— Curriculum Dashboard</title>
+<title>Curriculum Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root{
@@ -79,22 +79,65 @@
 <div id="app"></div>
 
 <script>
-// ─── CONFIGURE ME ────────────────────────────────────────────────────────
-// Paste your Google Sheet ID here (from the URL between /d/ and /edit),
-// after publishing it to the web (see the "Publish Setup" tab in the workbook).
-const CONFIG = {
-  SHEET_ID: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk", // e.g. "1AbCDefGHijkLMNoPQRstuVWxyz1234567890"
+// ─── STUDENTS ────────────────────────────────────────────────────────────
+// One entry per student. Open this page with ?student=<key> to load that
+// student's sheet and subject layout, e.g. index.html?student=tram
+// With no ?student= param, DEFAULT_STUDENT is used (keeps old bookmarks working).
+//
+// "grammarTrack" is an optional extra tab + per-unit box for subjects that
+// track a separate grammar/skill syllabus alongside the unit tracker (the
+// old "OEGC" section). Subjects that don't have one just set enabled:false
+// (or omit grammarTrack entirely) and that tab/box/tag won't be shown.
+const DEFAULT_STUDENT = "tram";
+
+const STUDENTS = {
+  tram: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk",
+    eyebrow: "English Tutoring Plan · Grade 9",
+    title: "Global English 9 — Full Year Curriculum",
+    subtitle: "Vocabulary from GE9 · Grammar from Oxford English Grammar Course · Phrasal Verbs from EPVIU",
+    skills: ["Vocabulary","Grammar (OEGC)","Writing","Speaking","Listening","Chapter Test"],
+    grammarTrack: {
+      enabled: true,
+      tabLabel: "OEGC Track",
+      sheetTab: "OEGC Grammar Track",
+      tagLabel: "OEGC",
+      unitColumn: "OEGC Sections",          // column in the "Unit Tracker" tab
+      detailField: "OEGC Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "📘 OEGC Grammar — this unit",
+    },
+  },
+
+  // Example for a student on a subject with no separate grammar track —
+  // copy this block, fill in the sheet ID, and add ?student=<key> to the URL.
+  // example: {
+  //   sheetId: "",
+  //   eyebrow: "Math Tutoring Plan",
+  //   title: "Algebra II — Full Year Curriculum",
+  //   subtitle: "Practice sets and problem-solving skills",
+  //   skills: ["Concepts","Practice Problems","Homework","Quiz"],
+  //   grammarTrack: { enabled: false },
+  // },
 };
+
+const params = new URLSearchParams(location.search);
+const studentKey = params.get("student") || DEFAULT_STUDENT;
+const STUDENT = STUDENTS[studentKey];
+
 // ──────────────────────────────────────────────────────────────────────
 
-const SKILLS = ["Vocabulary","Grammar (OEGC)","Writing","Speaking","Listening","Chapter Test"];
+const SKILLS = STUDENT ? STUDENT.skills : [];
+const GRAMMAR_TRACK = (STUDENT && STUDENT.grammarTrack) || { enabled: false };
+const CONFIG = {
+  SHEET_ID: params.get("sheet") || (STUDENT ? STUDENT.sheetId : ""),
+};
 const STATUS_COLORS = {
   "Not begun":     {bg:"#F3F4F6",text:"#6B7280",dot:"#9CA3AF",border:"#E5E7EB"},
   "In progress":   {bg:"#DBEAFE",text:"#1D4ED8",dot:"#3B82F6",border:"#93C5FD"},
   "Review needed": {bg:"#FEF3C7",text:"#92400E",dot:"#F59E0B",border:"#FCD34D"},
   "Completed":     {bg:"#D1FAE5",text:"#065F46",dot:"#10B981",border:"#6EE7B7"},
 };
-const OEGC_COLORS = {
+const GRAMMAR_COLORS = {
   "Done":     {bg:"#D1FAE5",text:"#065F46",border:"#6EE7B7"},
   "Review":   {bg:"#FEF3C7",text:"#92400E",border:"#FCD34D"},
   "Next":     {bg:"#DBEAFE",text:"#1D4ED8",border:"#93C5FD"},
@@ -144,7 +187,7 @@ async function loadData(){
     const [tracker, details, oegc, sessions] = await Promise.all([
       fetchSheetTab("Unit Tracker"),
       fetchSheetTab("Unit Details"),
-      fetchSheetTab("OEGC Grammar Track"),
+      GRAMMAR_TRACK.enabled ? fetchSheetTab(GRAMMAR_TRACK.sheetTab) : Promise.resolve([]),
       fetchSheetTab("Session Notes"),
     ]);
     return {tracker, details, oegc, sessions, isSample:false};
@@ -163,7 +206,7 @@ function statusPill(status){
 }
 
 function oegcBadge(code, title, status){
-  const c = OEGC_COLORS[status] || OEGC_COLORS["Upcoming"];
+  const c = GRAMMAR_COLORS[status] || GRAMMAR_COLORS["Upcoming"];
   return `<span class="oegc-badge" style="background:${c.bg};color:${c.text};border-color:${c.border}">
     <b>${code}</b> ${title}</span>`;
 }
@@ -182,9 +225,9 @@ function render(){
 
   app.innerHTML = `
     <div class="header"><div class="header-inner">
-      <div class="eyebrow">English Tutoring Plan · Grade 9</div>
-      <div class="h1">Global English 9 — Full Year Curriculum</div>
-      <div class="sub">Vocabulary from GE9 · Grammar from Oxford English Grammar Course · Phrasal Verbs from EPVIU</div>
+      <div class="eyebrow">${STUDENT.eyebrow}</div>
+      <div class="h1">${STUDENT.title}</div>
+      <div class="sub">${STUDENT.subtitle}</div>
       <div class="progress-row">
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
         <span style="font-size:13px;font-weight:700;min-width:38px">${pct}%</span>
@@ -192,12 +235,15 @@ function render(){
     </div></div>
     <div class="tabs"><div class="tabs-inner" id="tabs"></div></div>
     <div class="content" id="content"></div>
-    <div class="footer-note">${DATA.isSample ? "Showing sample data — set CONFIG.SHEET_ID at the top of this file to connect your live Google Sheet." : "Live data from Google Sheets."}</div>
+    <div class="footer-note">${DATA.isSample ? "Showing sample data — set a sheetId for this student in the STUDENTS config (or pass ?sheet=) to connect a live Google Sheet." : "Live data from Google Sheets."}</div>
   `;
 
-  const tabsDef = [["units","Unit Plans"],["oegc","OEGC Track"],["sessions","Session Notes"],["parent","Parent View"]];
+  const tabsDef = [["units","Unit Plans"]];
+  if (GRAMMAR_TRACK.enabled) tabsDef.push(["oegc", GRAMMAR_TRACK.tabLabel]);
+  tabsDef.push(["sessions","Session Notes"], ["parent","Parent View"]);
   const tabsEl = document.getElementById("tabs");
   let activeTab = window.__activeTab || "units";
+  if (!tabsDef.some(([key]) => key === activeTab)) activeTab = "units";
   tabsDef.forEach(([key,label]) => {
     const b = el(`<button class="tab-btn ${key===activeTab?"active":""}">${label}</button>`);
     b.onclick = () => { window.__activeTab = key; render(); };
@@ -205,7 +251,7 @@ function render(){
   });
 
   const content = document.getElementById("content");
-  if (DATA.isSample) content.appendChild(el(`<div class="banner">Sample preview data shown below. Connect CONFIG.SHEET_ID to your published Google Sheet to see real progress.</div>`));
+  if (DATA.isSample) content.appendChild(el(`<div class="banner">Sample preview data shown below. Set this student's sheetId in the STUDENTS config to see real progress.</div>`));
 
   if (activeTab === "units") renderUnits(content, tracker, details, sessions);
   else if (activeTab === "oegc") renderOegc(content, oegc);
@@ -238,7 +284,7 @@ function renderUnits(content, tracker, details, sessions){
       <span class="badge-num ${allDone?"done":""}">${allDone?"✓":uid}</span>
       <div style="flex:1;min-width:0">
         <div class="card-title">Unit ${uid}: ${u["Title"]}</div>
-        <div class="card-meta">pp. ${u["Pages"]} · Sem ${u["Semester"]} · Wks ${u["Weeks"]} · <span class="oegc-tag">OEGC ${u["OEGC Sections"]}</span></div>
+        <div class="card-meta">pp. ${u["Pages"]} · Sem ${u["Semester"]} · Wks ${u["Weeks"]}${GRAMMAR_TRACK.enabled ? ` · <span class="oegc-tag">${GRAMMAR_TRACK.tagLabel} ${u[GRAMMAR_TRACK.unitColumn]||""}</span>` : ""}</div>
       </div>
       <div class="card-right">
         <div class="mini-track"><div class="mini-fill ${allDone?"done":""}" style="width:${allDone?100:pct}%"></div></div>
@@ -252,10 +298,12 @@ function renderUnits(content, tracker, details, sessions){
 
     if (isOpen){
       const body = el(`<div class="card-body"></div>`);
-      body.appendChild(el(`<div class="box" style="background:#F5F3FF;border-color:#DDD6FE;margin-top:16px">
-        <div class="box-title" style="color:#7C3AED">📘 OEGC Grammar — this unit</div>
-        <div class="note">${d["OEGC Sections & Notes"]||""}</div>
-      </div>`));
+      if (GRAMMAR_TRACK.enabled){
+        body.appendChild(el(`<div class="box" style="background:#F5F3FF;border-color:#DDD6FE;margin-top:16px">
+          <div class="box-title" style="color:#7C3AED">${GRAMMAR_TRACK.boxTitle}</div>
+          <div class="note">${d[GRAMMAR_TRACK.detailField]||""}</div>
+        </div>`));
+      }
       body.appendChild(el(`<div class="box" style="background:#F9FAFB;border-color:#E5E7EB">
         <div class="box-title" style="color:#9CA3AF">📖 GE9 Grammar (textbook reference)</div>
         <div class="badge-row">${(d["GE9 Grammar (textbook, reference only)"]||"").split(";").map(g=>g.trim()).filter(Boolean).map(g=>`<span class="tag">${g}</span>`).join("")}</div>
@@ -299,12 +347,12 @@ function renderUnits(content, tracker, details, sessions){
 
 function renderOegc(content, oegc){
   content.appendChild(el(`<div class="box" style="background:#F5F3FF;border-color:#DDD6FE;margin-bottom:16px">
-    <b>Grammar track status</b> — updated live from the OEGC Grammar Track tab.
+    <b>${GRAMMAR_TRACK.tagLabel} track status</b> — updated live from the ${GRAMMAR_TRACK.sheetTab} tab.
   </div>`));
   const grid = el(`<div class="oegc-grid"></div>`);
   oegc.forEach(row => {
     const st = row["Status"] || "Upcoming";
-    const c = OEGC_COLORS[st] || OEGC_COLORS["Upcoming"];
+    const c = GRAMMAR_COLORS[st] || GRAMMAR_COLORS["Upcoming"];
     grid.appendChild(el(`<div class="oegc-cell" style="background:${c.bg};border-color:${c.border}">
       <span class="num" style="color:${c.text}">${row["Section"]}</span>
       <div style="flex:1">
@@ -355,7 +403,16 @@ function renderParent(content, tracker){
 }
 
 (async function init(){
-  document.getElementById("app").innerHTML = `<div style="padding:60px;text-align:center;color:#9CA3AF">Loading curriculum…</div>`;
+  const app = document.getElementById("app");
+  if (!STUDENT){
+    app.innerHTML = `<div style="padding:60px;text-align:center;color:#9CA3AF">
+      Unknown student "<b>${studentKey}</b>". Check the <code>?student=</code> URL param,
+      or add an entry for it in the STUDENTS config at the top of this file.
+    </div>`;
+    return;
+  }
+  document.title = STUDENT.title || "Curriculum Dashboard";
+  app.innerHTML = `<div style="padding:60px;text-align:center;color:#9CA3AF">Loading curriculum…</div>`;
   DATA = await loadData();
   render();
 })();
