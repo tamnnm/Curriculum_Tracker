@@ -1,0 +1,31 @@
+Found 28 raw files in /sessions/sleepy-affectionate-brown/mnt/Excel/Data wave 2
+--- processing Data 1949.xlsx ---
+--- processing Data 1950.xlsx ---
+--- processing Data 1951.xlsx ---
+--- processing Data 1952.xlsx ---
+--- processing Data 1953.xlsx ---
+--- processing Data 1954.xlsx ---
+--- processing Data 1955.xlsx ---
+--- processing Data 1956.xlsx ---
+--- processing Data 1957.xlsx ---
+--- processing Data 1958.xlsx ---
+--- processing Data 1959.xlsx ---
+--- processing Data 1960 new.xlsx ---
+--- processing Data 1960.xlsx ---
+--- processing Data 1961 (8-12).xlsx ---
+--- processing Data 1961.xlsx ---
+--- processing Data 1962.xlsx ---
+--- processing Data 1963.xlsx ---
+--- processing Data 1964.xlsx ---
+--- processing Data 1965.xlsx ---
+--- processing Data_1965.xlsx ---
+--- processing Data_1966_Tuyet.xlsx ---
+--- processing Data_1967_Tuyet.xlsx ---
+--- processing Data_1968_Tuyet.xlsx ---
+--- processing Data_1969_Tuyet.xlsx ---
+--- processing Data_1970_Tuyet.xlsx ---
+--- processing Data_1971_Tuyet.xlsx ---
+--- processing Data_1972_Tuyet.xlsx ---
+--- processing Data_1973_Tuyet.xlsx ---
+Total sightings collected: 32125
+Total clusters (candidate stations): 609

@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Math Curriculum Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #F8FAFC; }
+  textarea, input { font-family: inherit; }
+  textarea:focus, input:focus { outline: none; }
+  button:focus { outline: none; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  ✏️  EDIT THIS SECTION — your curriculum goes here          ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+// Teaching period dates
+const PERIOD_START = "2025-06-01";
+const PERIOD_END   = "2025-10-31";
+
+// Key dates visible on the timeline
+// type: "internal" (only you & student see) | "exam" (school exam — highlighted red)
+const MILESTONES = [
+  { id: "half",  label: "Half-Semester Check",      date: "2025-07-15", type: "internal" },
+  { id: "sem",   label: "Semester Knowledge Check", date: "2025-09-01", type: "internal" },
+  { id: "exam",  label: "School Exam Period",        date: "2025-10-01", type: "exam"     },
+];
+
+// Your units + sub-units
+// Each sub-unit: plannedWeeks, plannedLectures, plannedHours, masterBy (must finish by this date)
+const UNITS = [
+  {
+    id: 1, title: "Numbers & Operations", icon: "🔢",
+    subunits: [
+      { id: "1.1", title: "Integers & Rational Numbers", plannedWeeks: 2, plannedLectures: 4,  plannedHours: 10, masterBy: "2025-06-20" },
+      { id: "1.2", title: "Powers & Roots",              plannedWeeks: 3, plannedLectures: 6,  plannedHours: 15, masterBy: "2025-07-10" },
+    ]
+  },
+  {
+    id: 2, title: "Algebra", icon: "📐",
+    subunits: [
+      { id: "2.1", title: "Linear Equations",    plannedWeeks: 3, plannedLectures: 6,  plannedHours: 15, masterBy: "2025-07-20" },
+      { id: "2.2", title: "Quadratic Equations", plannedWeeks: 4, plannedLectures: 8,  plannedHours: 20, masterBy: "2025-08-15" },
+      { id: "2.3", title: "Inequalities",        plannedWeeks: 2, plannedLectures: 4,  plannedHours: 10, masterBy: "2025-08-30" },
+    ]
+  },
+  {
+    id: 3, title: "Geometry", icon: "📏",
+    subunits: [
+      { id: "3.1", title: "Triangles & Congruence", plannedWeeks: 3, plannedLectures: 6, plannedHours: 15, masterBy: "2025-09-10" },
+      { id: "3.2", title: "Circles",                plannedWeeks: 2, plannedLectures: 4, plannedHours: 10, masterBy: "2025-09-25" },
+    ]
+  },
+  {
+    id: 4, title: "Statistics & Probability", icon: "📊",
+    subunits: [
+      { id: "4.1", title: "Data & Graphs", plannedWeeks: 2, plannedLectures: 4, plannedHours: 10, masterBy: "2025-10-01" },
+      { id: "4.2", title: "Probability",   plannedWeeks: 2, plannedLectures: 4, plannedHours: 10, masterBy: "2025-10-15" },
+    ]
+  },
+];
+
+// ╚══════════════════════════════════════════════════════════════╝
+
+const STORAGE_KEY = "math-curriculum-v1";
+const UNIT_COLORS = ["#7C3AED","#2563EB","#059669","#D97706","#DB2777","#0284C7","#DC2626"];
+
+// Status is auto-computed from lecture count, with optional manual override to "finished"
+function computeStatus(done, planned, manualFinished) {
+  if (manualFinished) return "finished";
+  if (done === 0)      return "not_started";
+  if (done > planned)  return "extension";
+  if (done >= planned) return "finished";
+  return "practicing";
+}
+
+const STATUS = {
+  not_started: { label: "Not Started", bg: "#F1F5F9", text: "#64748B", border: "#CBD5E1", dot: "#94A3B8" },
+  practicing:  { label: "Practicing",  bg: "#DBEAFE", text: "#1D4ED8", border: "#93C5FD", dot: "#3B82F6" },
+  finished:    { label: "Finished",    bg: "#D1FAE5", text: "#065F46", border: "#6EE7B7", dot: "#10B981" },
+  extension:   { label: "Extended ⚠", bg: "#FEE2E2", text: "#991B1B", border: "#FCA5A5", dot: "#EF4444" },
+};
+
+// ── Helpers ─────────────────────────────────────────────────────
+function fmtDate(dateStr, opts = {}) {
+  return new Date(dateStr).toLocaleDateString("en-AU", { day: "numeric", month: "short", ...opts });
+}
+function daysFrom(dateStr) {
+  return Math.round((new Date(dateStr) - new Date()) / 86400000);
+}
+function pctBetween(dateStr, start, end) {
+  const d = new Date(dateStr).getTime();
+  const s = new Date(start).getTime();
+  const e = new Date(end).getTime();
+  return Math.min(100, Math.max(0, ((d - s) / (e - s)) * 100));
+}
+
+// ── Status Badge ────────────────────────────────────────────────
+function StatusBadge({ status }) {
+  const c = STATUS[status] || STATUS.not_started;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 5,
+      background: c.bg, color: c.text, border: `1.5px solid ${c.border}`,
+      borderRadius: 99, padding: "3px 10px", fontSize: 11, fontWeight: 700, whiteSpace: "nowrap",
+    }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: c.dot, flexShrink: 0 }} />
+      {c.label}
+    </span>
+  );
+}
+
+// ── Lecture Counter ─────────────────────────────────────────────
+function LectureCounter({ done, planned, color, onInc, onDec }) {
+  const over   = done > planned;
+  const pct    = Math.min(100, (done / planned) * 100);
+  const buffer = planned - done;
+  return (
+    <div style={{ textAlign: "center" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 8 }}>
+        <button onClick={onDec} disabled={done === 0} style={{
+          width: 30, height: 30, borderRadius: "50%", border: "1.5px solid #E2E8F0",
+          background: done > 0 ? "#F8FAFC" : "#F1F5F9", cursor: done > 0 ? "pointer" : "default",
+          fontSize: 18, color: "#64748B", opacity: done > 0 ? 1 : 0.3,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>−</button>
+
+        <div>
+          <span style={{ fontSize: 28, fontWeight: 800, color: over ? "#EF4444" : "#0F172A" }}>{done}</span>
+          <span style={{ fontSize: 14, color: "#94A3B8" }}>/{planned}</span>
+          <div style={{ fontSize: 10, color: "#94A3B8", marginTop: 1 }}>lectures</div>
+        </div>
+
+        <button onClick={onInc} style={{
+          width: 30, height: 30, borderRadius: "50%", border: `1.5px solid ${color}40`,
+          background: color + "15", cursor: "pointer",
+          fontSize: 18, color, display: "flex", alignItems: "center", justifyContent: "center",
+        }}>+</button>
+      </div>
+
+      {/* Bar */}
+      <div style={{ height: 7, background: "#E2E8F0", borderRadius: 4, overflow: "hidden", marginBottom: 5 }}>
+        <div style={{
+          width: `${pct}%`, height: "100%", borderRadius: 4, transition: "width 0.3s",
+          background: over ? "#EF4444" : pct >= 100 ? "#10B981" : color,
+        }} />
+      </div>
+
+      {/* Buffer label */}
+      <div style={{ fontSize: 11, fontWeight: 600, color: over ? "#EF4444" : buffer > 0 ? "#64748B" : "#10B981" }}>
+        {over
+          ? `⚠ Extended by ${done - planned} lecture${done - planned > 1 ? "s" : ""}`
+          : buffer > 0
+          ? `${buffer} lecture${buffer > 1 ? "s" : ""} of buffer left`
+          : "✓ Completed"
+        }
+      </div>
+    </div>
+  );
+}
+
+// ── Master-by Chip ───────────────────────────────────────────────
+function MasterByChip({ date }) {
+  if (!date) return null;
+  const days   = daysFrom(date);
+  const past   = days < 0;
+  const urgent = days >= 0 && days <= 10;
+  const color  = past ? { bg:"#FEE2E2", text:"#991B1B", border:"#FCA5A5" }
+               : urgent ? { bg:"#FEF3C7", text:"#92400E", border:"#FCD34D" }
+               : { bg:"#F0FDF4", text:"#065F46", border:"#6EE7B7" };
+  return (
+    <div style={{ background: color.bg, border: `1px solid ${color.border}`, borderRadius: 8, padding: "6px 10px" }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: color.text, marginBottom: 2 }}>
+        {past ? "⚠ Deadline passed" : urgent ? "⏰ Coming soon" : "🎯 Master by"}
+      </div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: color.text }}>
+        {fmtDate(date)} <span style={{ fontWeight: 400, fontSize: 11 }}>
+          {past ? `(${Math.abs(days)}d ago)` : days === 0 ? "(today)" : `(${days}d)`}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ── Sub-unit Card ────────────────────────────────────────────────
+function SubUnitCard({ sub, subState, color, onInc, onDec, onLog, onFinish }) {
+  const [open, setOpen]     = useState(false);
+  const [input, setInput]   = useState("");
+
+  const done    = subState?.lecturesDone || 0;
+  const manual  = subState?.manualFinished || false;
+  const logs    = subState?.logs || [];
+  const status  = computeStatus(done, sub.plannedLectures, manual);
+  const sc      = STATUS[status];
+  const estHrs  = done > 0 ? (done * sub.plannedHours / sub.plannedLectures).toFixed(1) : 0;
+
+  function addLog() {
+    if (!input.trim()) return;
+    const dateLabel = new Date().toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" });
+    onLog(sub.id, { text: input.trim(), date: dateLabel });
+    setInput("");
+  }
+
+  return (
+    <div style={{
+      borderRadius: 10, border: `1px solid ${sc.border}`,
+      borderLeft: `3px solid ${sc.dot}`, background: "#fff",
+      marginBottom: 8, overflow: "hidden",
+    }}>
+      {/* Header */}
+      <div onClick={() => setOpen(o => !o)} style={{
+        display: "flex", alignItems: "center", gap: 12,
+        padding: "11px 14px", cursor: "pointer",
+      }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600, fontSize: 14, color: "#0F172A" }}>{sub.id} · {sub.title}</div>
+          <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 2 }}>
+            {sub.plannedWeeks}w · {sub.plannedLectures} lectures · {sub.plannedHours}h planned
+            {logs.length > 0 && <span style={{ color: "#7C3AED" }}> · 📝 {logs.length} log{logs.length > 1 ? "s" : ""}</span>}
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <div style={{ width: 48, height: 4, background: "#E2E8F0", borderRadius: 2, overflow: "hidden" }}>
+            <div style={{ width: `${Math.min(100,(done/sub.plannedLectures)*100)}%`, height: "100%", background: sc.dot, borderRadius: 2 }} />
+          </div>
+          <span style={{ fontSize: 11, color: "#94A3B8", minWidth: 30 }}>{done}/{sub.plannedLectures}</span>
+          <StatusBadge status={status} />
+          <span style={{ fontSize: 16, color: "#CBD5E1", transform: open ? "rotate(90deg)" : "none", transition: "transform .2s", display:"inline-block" }}>›</span>
+        </div>
+      </div>
+
+      {open && (
+        <div style={{ padding: "0 14px 16px", borderTop: "1px solid #F1F5F9" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "160px 1fr auto", gap: 14, marginTop: 14, alignItems: "start" }}>
+
+            {/* Counter */}
+            <div style={{ background: "#F8FAFC", borderRadius: 10, padding: "14px 10px", border: "1px solid #E2E8F0" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: "#94A3B8", marginBottom: 10, textAlign: "center" }}>
+                Lectures taught
+              </div>
+              <LectureCounter done={done} planned={sub.plannedLectures} color={color} onInc={() => onInc(sub.id)} onDec={() => onDec(sub.id)} />
+            </div>
+
+            {/* Info */}
+            <div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                <div style={{ background: "#F5F3FF", borderRadius: 8, padding: "8px 12px", fontSize: 12, border: "1px solid #EDE9FE" }}>
+                  <div style={{ fontWeight: 700, color: "#7C3AED", marginBottom: 3 }}>Planned</div>
+                  <div style={{ color: "#374151" }}>{sub.plannedWeeks} weeks</div>
+                  <div style={{ color: "#374151" }}>{sub.plannedLectures} lectures</div>
+                  <div style={{ color: "#374151" }}>{sub.plannedHours} hours</div>
+                </div>
+                <div style={{ background: "#F8FAFC", borderRadius: 8, padding: "8px 12px", fontSize: 12, border: "1px solid #E2E8F0", flex: 1 }}>
+                  <div style={{ fontWeight: 700, color: "#64748B", marginBottom: 3 }}>Actual so far</div>
+                  <div style={{ color: "#374151" }}>{done} lectures done</div>
+                  <div style={{ color: "#374151" }}>~{estHrs}h estimated</div>
+                  <div style={{ color: "#374151" }}>
+                    Buffer: <span style={{ fontWeight: 700, color: done > sub.plannedLectures ? "#EF4444" : "#10B981" }}>
+                      {done > sub.plannedLectures ? `−${done - sub.plannedLectures}` : `+${sub.plannedLectures - done}`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mark finished / unmark */}
+              {status !== "finished" && done > 0 && (
+                <button onClick={() => onFinish(sub.id, true)} style={{
+                  fontSize: 11, fontWeight: 600, padding: "5px 14px",
+                  background: "#D1FAE5", color: "#065F46", border: "1.5px solid #6EE7B7",
+                  borderRadius: 20, cursor: "pointer",
+                }}>✓ Mark as Finished</button>
+              )}
+              {status === "finished" && manual && (
+                <button onClick={() => onFinish(sub.id, false)} style={{
+                  fontSize: 11, fontWeight: 600, padding: "5px 14px",
+                  background: "#F1F5F9", color: "#64748B", border: "1.5px solid #CBD5E1",
+                  borderRadius: 20, cursor: "pointer",
+                }}>↩ Unmark</button>
+              )}
+            </div>
+
+            {/* Master by */}
+            <MasterByChip date={sub.masterBy} />
+          </div>
+
+          {/* Lecture log */}
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: "#94A3B8", marginBottom: 8 }}>
+              📝 Lecture Log
+            </div>
+            {logs.length === 0 && (
+              <div style={{ fontSize: 12, color: "#CBD5E1", fontStyle: "italic", marginBottom: 8 }}>
+                No entries yet — log what you covered after each class.
+              </div>
+            )}
+            <div style={{ maxHeight: 180, overflowY: "auto", marginBottom: 8 }}>
+              {logs.map((l, i) => (
+                <div key={i} style={{
+                  background: "#F8FAFC", borderRadius: 7, padding: "7px 10px",
+                  borderLeft: `2px solid ${color}60`, marginBottom: 5,
+                }}>
+                  <div style={{ fontSize: 10, color: "#94A3B8", marginBottom: 3, fontWeight: 600 }}>
+                    Lecture {i + 1} · {l.date}
+                  </div>
+                  <div style={{ fontSize: 12, color: "#374151", lineHeight: 1.6 }}>{l.text}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <textarea
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); addLog(); } }}
+                placeholder="What did you cover today? (Enter to save, Shift+Enter for new line)"
+                rows={2}
+                style={{
+                  flex: 1, borderRadius: 8, border: "1.5px solid #E2E8F0",
+                  padding: "8px 10px", fontSize: 12, resize: "none", lineHeight: 1.5,
+                  background: "#F8FAFC",
+                }}
+              />
+              <button onClick={addLog} style={{
+                padding: "0 16px", borderRadius: 8, border: "none",
+                background: color, color: "#fff", fontSize: 12, fontWeight: 700, cursor: "pointer",
+              }}>Add</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Unit Card ────────────────────────────────────────────────────
+function UnitCard({ unit, state, colorIndex, onInc, onDec, onLog, onFinish }) {
+  const [open, setOpen] = useState(false);
+  const color = UNIT_COLORS[colorIndex % UNIT_COLORS.length];
+
+  const totalPlanned = unit.subunits.reduce((s, u) => s + u.plannedLectures, 0);
+  const totalDone    = unit.subunits.reduce((s, u) => s + (state[u.id]?.lecturesDone || 0), 0);
+  const pct          = totalPlanned > 0 ? Math.round((totalDone / totalPlanned) * 100) : 0;
+  const statuses     = unit.subunits.map(u => computeStatus(state[u.id]?.lecturesDone || 0, u.plannedLectures, state[u.id]?.manualFinished));
+  const hasExt       = statuses.includes("extension");
+  const allDone      = statuses.every(s => s === "finished");
+
+  return (
+    <div style={{
+      background: "#fff", borderRadius: 14,
+      border: "1px solid #E2E8F0", borderLeft: `5px solid ${color}`,
+      marginBottom: 14, boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+      overflow: "hidden",
+    }}>
+      <div onClick={() => setOpen(o => !o)} style={{
+        display: "flex", alignItems: "center", gap: 14,
+        padding: "16px 18px", cursor: "pointer",
+      }}>
+        <span style={{
+          width: 42, height: 42, borderRadius: 10, flexShrink: 0,
+          background: color + "18", fontSize: 20,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>{unit.icon}</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 700, fontSize: 16, color: "#0F172A" }}>Unit {unit.id}: {unit.title}</div>
+          <div style={{ fontSize: 12, color: "#64748B", marginTop: 2 }}>
+            {unit.subunits.length} sub-units · {totalPlanned} lectures planned · {totalDone} done
+            {hasExt && <span style={{ color: "#EF4444", fontWeight: 700 }}> · ⚠ Extended</span>}
+            {allDone && <span style={{ color: "#10B981", fontWeight: 700 }}> · ✓ Complete</span>}
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <div>
+            <div style={{ width: 90, height: 6, background: "#E2E8F0", borderRadius: 3, overflow: "hidden", marginBottom: 3 }}>
+              <div style={{ width: `${Math.min(100,pct)}%`, height: "100%", background: allDone ? "#10B981" : color, borderRadius: 3 }} />
+            </div>
+            <div style={{ fontSize: 11, color: "#94A3B8", textAlign: "right" }}>{pct}%</div>
+          </div>
+          <span style={{ fontSize: 18, color: "#CBD5E1", transform: open ? "rotate(90deg)" : "none", transition: "transform .2s", display: "inline-block" }}>›</span>
+        </div>
+      </div>
+
+      {open && (
+        <div style={{ padding: "0 18px 18px", borderTop: "1px solid #F8FAFC" }}>
+          <div style={{ marginTop: 14 }}>
+            {unit.subunits.map(sub => (
+              <SubUnitCard
+                key={sub.id} sub={sub} subState={state[sub.id] || {}} color={color}
+                onInc={() => onInc(sub.id)}
+                onDec={() => onDec(sub.id)}
+                onLog={onLog} onFinish={onFinish}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Timeline View ────────────────────────────────────────────────
+function TimelineView({ state }) {
+  const now      = new Date();
+  const todayPct = pctBetween(now.toISOString(), PERIOD_START, PERIOD_END);
+
+  const msColors = { internal: "#7C3AED", exam: "#EF4444" };
+
+  return (
+    <div>
+      {/* Main timeline bar */}
+      <div style={{ background: "#fff", borderRadius: 14, padding: "20px 24px", marginBottom: 24, border: "1px solid #E2E8F0", boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#94A3B8", marginBottom: 10 }}>
+          <span>🏁 {fmtDate(PERIOD_START)}</span>
+          <span style={{ fontWeight: 700, color: "#2563EB" }}>📍 Today · {fmtDate(now.toISOString())}</span>
+          <span>🏁 {fmtDate(PERIOD_END)}</span>
+        </div>
+
+        <div style={{ position: "relative", height: 16, background: "#F1F5F9", borderRadius: 8, marginBottom: 36 }}>
+          {/* Elapsed fill */}
+          <div style={{ position: "absolute", inset: 0, width: `${todayPct}%`, background: "#DBEAFE", borderRadius: 8 }} />
+          {/* Today line */}
+          <div style={{
+            position: "absolute", left: `${todayPct}%`, top: -5,
+            width: 3, height: 26, background: "#2563EB", borderRadius: 2,
+            transform: "translateX(-50%)",
+          }} />
+          {/* Milestone dots */}
+          {MILESTONES.map(m => {
+            const p = pctBetween(m.date, PERIOD_START, PERIOD_END);
+            return (
+              <div key={m.id} style={{ position: "absolute", left: `${p}%`, top: "50%", transform: "translate(-50%,-50%)" }}>
+                <div style={{ width: 14, height: 14, borderRadius: "50%", background: msColors[m.type], border: "2px solid #fff", boxShadow: "0 0 0 1px " + msColors[m.type] }} />
+              </div>
+            );
+          })}
+          {/* Milestone labels below */}
+          {MILESTONES.map(m => {
+            const p = pctBetween(m.date, PERIOD_START, PERIOD_END);
+            const days = daysFrom(m.date);
+            return (
+              <div key={m.id} style={{
+                position: "absolute", left: `${p}%`, top: 22,
+                transform: "translateX(-50%)", textAlign: "center",
+                fontSize: 10, fontWeight: 700, color: msColors[m.type], whiteSpace: "nowrap",
+                lineHeight: 1.4,
+              }}>
+                <div>{m.label}</div>
+                <div style={{ fontWeight: 400, color: "#94A3B8" }}>
+                  {fmtDate(m.date)} · {days < 0 ? `${Math.abs(days)}d ago` : `${days}d`}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Legend */}
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", fontSize: 11 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#7C3AED" }} />
+            <span style={{ color: "#64748B" }}>Internal check (you & student)</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#EF4444" }} />
+            <span style={{ color: "#64748B" }}>School exam</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Sub-unit deadline list */}
+      <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".07em", color: "#94A3B8", marginBottom: 14 }}>
+        Sub-unit Deadlines
+      </div>
+      {UNITS.map((unit, ci) => {
+        const color = UNIT_COLORS[ci % UNIT_COLORS.length];
+        return (
+          <div key={unit.id} style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color, marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+              {unit.icon} {unit.title}
+            </div>
+            {unit.subunits.map(sub => {
+              const done   = state[sub.id]?.lecturesDone || 0;
+              const manual = state[sub.id]?.manualFinished || false;
+              const st     = computeStatus(done, sub.plannedLectures, manual);
+              const sc     = STATUS[st];
+              const days   = daysFrom(sub.masterBy);
+              const over   = days < 0;
+              const urgent = !over && days <= 10;
+              return (
+                <div key={sub.id} style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  padding: "9px 12px", borderRadius: 9,
+                  background: "#fff", border: "1px solid #F1F5F9",
+                  marginBottom: 5, boxShadow: "0 1px 2px rgba(0,0,0,0.03)",
+                }}>
+                  {/* progress mini bar */}
+                  <div style={{ width: 4, alignSelf: "stretch", background: sc.dot, borderRadius: 2, flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "#0F172A" }}>{sub.id} · {sub.title}</div>
+                    <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 1 }}>{done}/{sub.plannedLectures} lectures</div>
+                  </div>
+                  <StatusBadge status={st} />
+                  <div style={{
+                    fontSize: 11, fontWeight: 700, minWidth: 90, textAlign: "right",
+                    color: over ? "#EF4444" : urgent ? "#F59E0B" : "#10B981",
+                  }}>
+                    {over
+                      ? `${Math.abs(days)}d overdue`
+                      : days === 0 ? "Today!"
+                      : `${days}d left`
+                    }
+                  </div>
+                  <div style={{ fontSize: 11, color: "#CBD5E1", minWidth: 60, textAlign: "right" }}>
+                    by {fmtDate(sub.masterBy)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Main App ─────────────────────────────────────────────────────
+function App() {
+  const [tab, setTab]     = useState("units");
+  const [state, setState] = useState({});
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    try { const v = localStorage.getItem(STORAGE_KEY); if (v) setState(JSON.parse(v)); } catch {}
+    setLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (loaded) try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+  }, [state, loaded]);
+
+  function inc(subId) {
+    setState(p => ({ ...p, [subId]: { ...p[subId], lecturesDone: (p[subId]?.lecturesDone || 0) + 1 } }));
+  }
+  function dec(subId) {
+    setState(p => ({ ...p, [subId]: { ...p[subId], lecturesDone: Math.max(0, (p[subId]?.lecturesDone || 0) - 1) } }));
+  }
+  function addLog(subId, entry) {
+    setState(p => ({ ...p, [subId]: { ...p[subId], logs: [...(p[subId]?.logs || []), entry] } }));
+  }
+  function setFinished(subId, val) {
+    setState(p => ({ ...p, [subId]: { ...p[subId], manualFinished: val } }));
+  }
+
+  const allSubs     = UNITS.flatMap(u => u.subunits);
+  const totalPlan   = allSubs.reduce((s, u) => s + u.plannedLectures, 0);
+  const totalDone   = allSubs.reduce((s, u) => s + (state[u.id]?.lecturesDone || 0), 0);
+  const pct         = totalPlan > 0 ? Math.round((totalDone / totalPlan) * 100) : 0;
+  const nFinished   = allSubs.filter(u => computeStatus(state[u.id]?.lecturesDone||0, u.plannedLectures, state[u.id]?.manualFinished) === "finished").length;
+  const nExtended   = allSubs.filter(u => computeStatus(state[u.id]?.lecturesDone||0, u.plannedLectures, state[u.id]?.manualFinished) === "extension").length;
+
+  if (!loaded) return <div style={{ padding: 40, textAlign: "center", color: "#94A3B8" }}>Loading…</div>;
+
+  return (
+    <div style={{ fontFamily: "'Inter', system-ui, sans-serif", minHeight: "100vh", background: "#F8FAFC" }}>
+
+      {/* Header */}
+      <div style={{ background: "#0F172A", color: "#fff", padding: "22px 24px" }}>
+        <div style={{ maxWidth: 920, margin: "0 auto" }}>
+          <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: ".12em", opacity: .5, marginBottom: 4 }}>
+            Math Tutoring · Summer Programme
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-.02em" }}>Mathematics Curriculum Tracker</div>
+          <div style={{ fontSize: 13, opacity: .6, marginTop: 3 }}>
+            {UNITS.length} units · {allSubs.length} sub-units · {totalPlan} lectures planned ·{" "}
+            {fmtDate(PERIOD_START)} – {fmtDate(PERIOD_END)}
+          </div>
+          {/* Progress bar */}
+          <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 16 }}>
+            <div style={{ flex: 1, height: 7, background: "rgba(255,255,255,.15)", borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ width: `${pct}%`, height: "100%", background: "#60A5FA", borderRadius: 4, transition: "width .4s" }} />
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 700, minWidth: 38 }}>{pct}%</span>
+          </div>
+          <div style={{ display: "flex", gap: 18, marginTop: 8, fontSize: 12, opacity: .7, flexWrap: "wrap" }}>
+            <span>📚 {totalDone}/{totalPlan} lectures</span>
+            <span>✅ {nFinished} sub-units done</span>
+            {nExtended > 0 && <span style={{ color: "#FCA5A5" }}>⚠ {nExtended} extended</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ background: "#fff", borderBottom: "1px solid #E2E8F0" }}>
+        <div style={{ maxWidth: 920, margin: "0 auto", display: "flex" }}>
+          {[["units","📋 Unit Plans"],["timeline","📅 Timeline & Deadlines"]].map(([key, label]) => (
+            <button key={key} onClick={() => setTab(key)} style={{
+              padding: "13px 24px", fontSize: 13, fontWeight: 600, cursor: "pointer",
+              background: "none", border: "none",
+              borderBottom: tab === key ? "3px solid #0F172A" : "3px solid transparent",
+              color: tab === key ? "#0F172A" : "#64748B",
+            }}>{label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ maxWidth: 920, margin: "0 auto", padding: "24px 16px" }}>
+        {tab === "units" && (
+          <div>
+            <div style={{ background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 10, padding: "10px 14px", marginBottom: 20, fontSize: 12, color: "#1D4ED8" }}>
+              <b>How to use:</b> Click a unit to expand → click a sub-unit → use +/− to track lectures taught → the status updates automatically.
+              Once planned lectures are exceeded, it turns <span style={{ color: "#EF4444", fontWeight: 700 }}>Extended</span>.
+              Click <b>Mark as Finished</b> if you're done early. Log each lecture in the log section.
+            </div>
+            {UNITS.map((unit, i) => (
+              <UnitCard key={unit.id} unit={unit} state={state} colorIndex={i}
+                onInc={inc} onDec={dec} onLog={addLog} onFinish={setFinished}
+              />
+            ))}
+          </div>
+        )}
+        {tab === "timeline" && <TimelineView state={state} />}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

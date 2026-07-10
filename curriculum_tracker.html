@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GE9 Curriculum Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #F4F7F4; }
+  textarea:focus { outline: none; border-color: #6EE7B7 !important; }
+  button:focus { outline: none; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #f1f1f1; }
+  ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+// ─── STORAGE (localStorage) ───────────────────────────────────────────────────
+const storage = {
+  get: (key) => {
+    try { const v = localStorage.getItem(key); return v ? { value: v } : null; } catch { return null; }
+  },
+  set: (key, value) => {
+    try { localStorage.setItem(key, value); } catch {}
+  }
+};
+
+// ─── STATUS SYSTEM ───────────────────────────────────────────────────────────
+const STATUS = ["Not begun", "In progress", "Review needed", "Completed"];
+const STATUS_COLORS = {
+  "Not begun":    { bg: "#F3F4F6", text: "#6B7280", dot: "#9CA3AF", border: "#E5E7EB" },
+  "In progress":  { bg: "#DBEAFE", text: "#1D4ED8", dot: "#3B82F6", border: "#93C5FD" },
+  "Review needed":{ bg: "#FEF3C7", text: "#92400E", dot: "#F59E0B", border: "#FCD34D" },
+  "Completed":    { bg: "#D1FAE5", text: "#065F46", dot: "#10B981", border: "#6EE7B7" },
+};
+
+// ─── OEGC DATA ────────────────────────────────────────────────────────────────
+const OEGC_STATUS = {
+  1:"done", 2:"done", 3:"done", 4:"done", 5:"review",
+  6:"next", 7:"ahead", 8:"ahead", 9:"ahead", 10:"ahead",
+  11:"review", 12:"ahead", 13:"ahead", 14:"ahead", 15:"ahead",
+  16:"ahead", 17:"ahead", 18:"ahead", 19:"ahead", 20:"ahead",
+};
+const OEGC_SECTIONS = {
+  1:  { title: "be and have",                   pages: "1–12"    },
+  2:  { title: "Present tenses",                pages: "13–24"   },
+  3:  { title: "Talking about the future",      pages: "25–38"   },
+  4:  { title: "Past tenses",                   pages: "39–46"   },
+  5:  { title: "Perfect tenses",                pages: "47–70"   },
+  6:  { title: "Modal verbs",                   pages: "71–92"   },
+  7:  { title: "Passives",                      pages: "93–102"  },
+  8:  { title: "Questions and negatives",       pages: "103–114" },
+  9:  { title: "Infinitives and -ing forms",    pages: "115–140" },
+  10: { title: "Various structures with verbs", pages: "141–154" },
+  11: { title: "Articles: a/an and the",        pages: "155–166" },
+  12: { title: "Determiners",                   pages: "167–188" },
+  13: { title: "Personal pronouns & possessives",pages:"189–200" },
+  14: { title: "Nouns",                         pages: "201–214" },
+  15: { title: "Adjectives and adverbs",        pages: "215–226" },
+  16: { title: "Comparison",                    pages: "227–238" },
+  17: { title: "Conjunctions",                  pages: "239–252" },
+  18: { title: "If etc (conditionals)",         pages: "253–266" },
+  19: { title: "Relatives",                     pages: "267–280" },
+  20: { title: "Indirect speech",               pages: "281–292" },
+};
+
+// ─── CURRICULUM DATA ──────────────────────────────────────────────────────────
+const UNITS = [
+  {
+    id: 1, title: "Views and Voices", pages: "11–32", sem: 1, weeks: "1–4", unitDone: true,
+    oegcSections: [1, 2, 3],
+    oegcNote: "Sections 1–3 completed. Present tenses, be/have, and basic future forms all done.",
+    ge9Grammar: ["-ing forms", "Present simple & continuous (active)", "Present simple & continuous passive"],
+    ge9GrammarNote: "GE9 spreads present tense grammar across this unit in small pieces — all covered systematically via OEGC S1–S2.",
+    vocabThemes: ["Classroom interaction", "Character and behaviour"],
+    coreVocab: ["responsible", "stereotype", "prejudice", "confident", "mature", "peer", "behaviour", "attitude"],
+    wordFamilies: ["stereotype → stereotypical / stereotyping", "responsible → responsibility / irresponsible"],
+    epviu: ["speak up", "put across", "bring up", "point out", "go on about"],
+    writing: "An email to a friend. An interpretation of a photo. A presentation on teenage life.",
+    speaking: "Give your views on talking in class. Discuss what should be in a book about teenage psychology.",
+    listening: "Talking in class. What it's like to be a teenager. Comparing newspaper reports.",
+    uoe: { type: "-ing forms; Present simple and continuous; Present simple & continuous passive" },
+    milestone: null,
+  },
+  {
+    id: 2, title: "Well-being", pages: "33–54", sem: 1, weeks: "5–8", unitDone: false,
+    oegcSections: [5, 11, 6],
+    oegcNote: "S5 (Perfect tenses) + S11 (Articles) — active review, still needs work. S6 (Modal verbs) — starting now. GE9's 'must have / might have / can't have + past participle' makes S5–S6 the natural focus.",
+    ge9Grammar: ["Abstract nouns", "Comparative adjectives & adverbs", "Must have / might have / can't have + past participle", "Strong adjectives & intensifiers"],
+    ge9GrammarNote: "Modal perfects (must have, might have) sit right at the intersection of S5 and S6. Strong adjectives are vocabulary-level, not OEGC grammar.",
+    vocabThemes: ["Food and health", "Feelings and emotions"],
+    coreVocab: ["balanced diet", "nutritious", "well-being", "anxiety", "overwhelm", "exhausted", "immune", "cope"],
+    wordFamilies: ["nourish → nourishment / nutritious / nutrient", "anxious → anxiety / anxiously"],
+    epviu: ["cut down on", "give up", "work out", "break down", "feel like"],
+    writing: "Interpret a photo and speculate. A poster giving advice about sleep. A presentation about happiness and well-being.",
+    speaking: "Discuss opinions about food and health. Why languages have more negative emotion words. Talk about happiness.",
+    listening: "Why is a balanced diet important? Healthy eating. Interviews about happiness.",
+    uoe: { type: "Abstract nouns; Comparative adjectives & adverbs; Must have/might have/can't have + past participle; Strong adjectives & intensifiers" },
+    milestone: null,
+  },
+  {
+    id: 3, title: "Tourism", pages: "55–76", sem: 1, weeks: "9–12", unitDone: false,
+    oegcSections: [7, 16],
+    oegcNote: "S7 (Passives) — aligns directly with GE9's 'past continuous passive'. S16 (Comparison) — covers compound/comparative adjectives from GE9.",
+    ge9Grammar: ["Compound nouns", "Multi-word verbs (phrasal & prepositional)", "Past continuous passive", "Compound adjectives", "Participle adjectives"],
+    ge9GrammarNote: "Past continuous passive → S7. Compound/comparative adjectives → S16. Multi-word verbs are EPVIU territory, not OEGC.",
+    vocabThemes: ["Holidays", "Responsible tourism"],
+    coreVocab: ["itinerary", "sustainable", "ecotourism", "accommodation", "destination", "heritage", "souvenir", "hospitality"],
+    wordFamilies: ["accommodate → accommodation / accommodating", "sustain → sustainable / sustainability"],
+    epviu: ["check in", "check out", "set off", "look forward to", "get away"],
+    writing: "Write a travel blog. A presentation about a volunteer holiday. A report about a school trip.",
+    speaking: "Talk about holidays. Describe a holiday that went wrong. Debate: 'Tourism is a good thing'.",
+    listening: "Going on holiday. A blog diary. Types of holidays. Notes for a debate on tourism.",
+    uoe: { type: "Compound nouns; Multi-word verbs; Past continuous passive; Compound/participle adjectives" },
+    milestone: null,
+  },
+  {
+    id: 4, title: "Science", pages: "77–98", sem: 1, weeks: "13–16", unitDone: false,
+    oegcSections: [9, 17],
+    oegcNote: "S9 (Infinitives & -ing forms) — big section, covers verb patterns, -ing as subject/object, dependent prepositions + -ing. S17 (Conjunctions) — GE9 explicitly has 'conjunctions' in Use of English.",
+    ge9Grammar: ["Conjunctions", "Present and past simple (revision)", "Present perfect continuous", "Present perfect active & passive", "Dependent prepositions following verbs"],
+    ge9GrammarNote: "Present perfect (S5) already done. Conjunctions → S17. Dependent prepositions + verbs naturally arise in S9 (verb + -ing/-to patterns).",
+    vocabThemes: ["Sight and colour", "DNA and genetics", "Farming and animals", "Zoos"],
+    coreVocab: ["genetics", "inoculation", "biodiversity", "endangered", "extinction", "conservation", "vaccine", "chromosome"],
+    wordFamilies: ["extinct → extinction / extinguish", "conserve → conservation / conservationist / conservatory"],
+    epviu: ["find out", "carry out", "come across", "look into", "figure out"],
+    writing: "An essay giving your views about zoos. A fact file about an animal species in danger of extinction. A speech about an important scientist.",
+    speaking: "Discuss colours in pictures. Discuss the history of disease and vaccination. Give your views on zoos.",
+    listening: "How humans and animals see colour. A history of diseases. A conversation about DNA and genetics.",
+    uoe: { type: "Conjunctions; Present perfect active & passive; Dependent prepositions following verbs" },
+    milestone: "🏁 End of Semester 1 — Mid-Year Review",
+  },
+  {
+    id: 5, title: "Technology", pages: "99–120", sem: 2, weeks: "17–20", unitDone: false,
+    oegcSections: [19, 10],
+    oegcNote: "S19 (Relatives) — GE9 explicitly lists 'relative clauses' in Use of English. S10 (Various structures) — covers causative 'have/get something done' which GE9 lists as 'to have something done'.",
+    ge9Grammar: ["Relative clauses", "Expressing the future (revision)", "To have something done", "Future continuous"],
+    ge9GrammarNote: "Future (S3) already done. Relative clauses → S19. 'Have something done' is the causative structure in S10 pp. 144–145.",
+    vocabThemes: ["Social media", "Ideas for presents"],
+    coreVocab: ["algorithm", "artificial intelligence", "digital", "innovation", "connectivity", "automation", "database", "virtual"],
+    wordFamilies: ["automate → automation / automated / automatic", "connect → connectivity / connected / disconnect"],
+    epviu: ["log in", "sign up", "set up", "shut down", "come up with"],
+    writing: "Write a report on technology in your school. Design a timeline for technology. Make a technology timeline for the future.",
+    speaking: "Role-play an interview about social media. Talk about developments in technology. Discuss future technology.",
+    listening: "A radio interview about attitudes to social media. The Internet of Things. Predicting future technologies.",
+    uoe: { type: "Relative clauses; Expressing the future; To have something done; Future continuous" },
+    milestone: null,
+  },
+  {
+    id: 6, title: "Rules and Laws", pages: "121–142", sem: 2, weeks: "21–25", unitDone: false,
+    oegcSections: [18, 20],
+    oegcNote: "S18 (If etc / conditionals) — GE9 explicitly has 'third conditional'. S20 (Indirect speech) — GE9 explicitly has 'reported questions and statements'.",
+    ge9Grammar: ["Verbs in passive followed by infinitive", "Reported questions and statements", "Third conditional", "Past continuous"],
+    ge9GrammarNote: "Third conditional → S18 (pp. 258–259). Reported speech → S20. Past continuous (S4) already done. Passive + infinitive is in S7 (already planned, can revisit).",
+    vocabThemes: ["School rules", "Family rules", "Life events"],
+    coreVocab: ["legislation", "rights", "responsibility", "consequence", "moral", "permission", "witness", "justice"],
+    wordFamilies: ["responsible → responsibility / irresponsibility / irresponsible", "legal → illegal / legislation / legislate"],
+    epviu: ["stick to", "get away with", "stand up for", "put up with", "give in"],
+    writing: "Reply to an email about rules at your school. Record a conversation about a moral dilemma. Write a police statement.",
+    speaking: "Role-play an interview about rules. Discuss school rules. Role-play asking permission from parents.",
+    listening: "An interview about school rules. Run your home like a business. Moral dilemmas.",
+    uoe: { type: "Passives followed by infinitive; Reported questions & statements; Third conditional; Past continuous" },
+    milestone: null,
+  },
+  {
+    id: 7, title: "Competition", pages: "143–164", sem: 2, weeks: "26–29", unitDone: false,
+    oegcSections: [15, 8],
+    oegcNote: "S15 (Adjectives & adverbs) — detailed treatment of manner, degree, position. S8 (Questions & negatives) — lighter, mostly revision, useful for exam technique.",
+    ge9Grammar: ["Past perfect simple and continuous", "Comparatives and superlatives", "Past perfect simple, active and passive", "Connectives"],
+    ge9GrammarNote: "Past perfect is part of S5 (already done — review if needed). Comparatives/superlatives → S16 (taught in Unit 3). Connectives → S17 (taught in Unit 4). This unit's new OEGC focus: S15 + S8.",
+    vocabThemes: ["The advantages of sports", "Competition"],
+    coreVocab: ["competitive", "tournament", "sportsmanship", "endurance", "opponent", "champion", "eliminate", "discipline"],
+    wordFamilies: ["compete → competition / competitor / competitive", "endure → endurance / enduring"],
+    epviu: ["give up", "keep up with", "pull ahead", "fall behind", "work out"],
+    writing: "A 'for and against' essay on competitive sport. A presentation of the rules of a game. An entry for a photography competition.",
+    speaking: "Discuss the benefits of sports. Talk about sport. Describe unusual sports. Discuss competitive vs non-competitive sports.",
+    listening: "Sports and activities. Descriptions of unusual sports. News reports of competitions.",
+    uoe: { type: "Past perfect simple & continuous; Comparatives & superlatives; Connectives" },
+    milestone: null,
+  },
+  {
+    id: 8, title: "The Environment", pages: "165–186", sem: 2, weeks: "30–33", unitDone: false,
+    oegcSections: [14, 12],
+    oegcNote: "S14 (Nouns) — GE9 explicitly has 'complex noun phrases'. S12 (Determiners) — extends S11 articles work, covers much/many/few/little/both/all which appear in environment topics.",
+    ge9Grammar: ["Adverbs of frequency", "Multi-word verbs", "Verbs followed by -ing", "Complex noun phrases"],
+    ge9GrammarNote: "Verbs + -ing is part of S9 (taught in Unit 4 — can revisit key examples). Complex noun phrases → S14. Adverbs of frequency → brief slot in S15. Multi-word verbs → EPVIU track.",
+    vocabThemes: ["Weather", "Climate change and the environment", "Eco products"],
+    coreVocab: ["carbon footprint", "renewable", "deforestation", "emission", "glacier", "drought", "biodegradable", "landfill"],
+    wordFamilies: ["renew → renewable / renewal / non-renewable", "sustain → sustainable / sustainability / unsustainable"],
+    epviu: ["cut down on", "throw away", "run out of", "use up", "clear up"],
+    writing: "Write a report about extreme weather conditions. Compile a list of ideas for sustainable living. Make a plan for a sustainable future.",
+    speaking: "Give a weather forecast. Role-play an interview about the environment. Discuss how to make cities better places to live.",
+    listening: "A conversation about the weather. Global warming and extreme weather. A news story about sustainable fashion.",
+    uoe: { type: "Adverbs of frequency; Multi-word verbs; Verbs followed by -ing; Complex noun phrases" },
+    milestone: null,
+  },
+  {
+    id: 9, title: "Achievements and Ambitions", pages: "187–208", sem: 2, weeks: "34–37", unitDone: false,
+    oegcSections: [13, 20],
+    oegcNote: "S13 (Personal pronouns & possessives) — light revision. S20 (Indirect speech) revisited — GE9 explicitly marks it as 'reported speech statements (revision)'. Final unit = comprehensive year-end review.",
+    ge9Grammar: ["Relative clauses (revision)", "Connectives", "Participle clauses", "Reported speech — statements (revision)", "Dependent prepositions following adjectives"],
+    ge9GrammarNote: "All grammar in this unit is revision of previously taught OEGC sections. Use this unit to consolidate and identify gaps before end-of-year assessment.",
+    vocabThemes: ["Jobs", "Inspirational people", "Adjectives to describe people"],
+    coreVocab: ["ambition", "qualification", "inspiration", "perseverance", "entrepreneur", "vocation", "milestone", "achievement"],
+    wordFamilies: ["achieve → achievement / achiever / underachieve", "inspire → inspiration / inspirational / inspiring"],
+    epviu: ["apply for", "set out to", "move up", "live up to", "take on"],
+    writing: "Write an informal letter. A short talk about the job you would like to do. Organise a discussion about achievement.",
+    speaking: "Discuss the kinds of jobs teenagers want. Describe how well-known people have helped others. Talk about yourself.",
+    listening: "A conversation about jobs. How a celebrity helped a young person achieve her dream. People discussing candidates for a job.",
+    uoe: { type: "Relative clauses; Connectives; Participle clauses; Reported speech (revision); Dependent prepositions + adjectives" },
+    milestone: "🎓 End of Year — Final Review & Assessment",
+  },
+];
+
+const SKILL_LABELS = ["Vocabulary", "Grammar (OEGC)", "Writing", "Speaking", "Listening", "Chapter Test"];
+
+// ─── OEGC BADGE ──────────────────────────────────────────────────────────────
+function OegcBadge({ sectionNum, compact }) {
+  const st = OEGC_STATUS[sectionNum];
+  const sec = OEGC_SECTIONS[sectionNum];
+  const colors = {
+    done:   { bg: "#D1FAE5", text: "#065F46", border: "#6EE7B7", label: "✓ Done" },
+    review: { bg: "#FEF3C7", text: "#92400E", border: "#FCD34D", label: "⚠ Review" },
+    next:   { bg: "#DBEAFE", text: "#1D4ED8", border: "#93C5FD", label: "▶ Next" },
+    ahead:  { bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB", label: "Upcoming" },
+  };
+  const c = colors[st];
+  return (
+    <div style={{
+      display: "inline-flex", alignItems: "center", gap: 6,
+      background: c.bg, border: `1.5px solid ${c.border}`,
+      borderRadius: 8, padding: compact ? "4px 8px" : "6px 12px",
+      marginBottom: compact ? 0 : 4,
+    }}>
+      <span style={{ fontWeight: 800, fontSize: compact ? 11 : 13, color: c.text }}>S{sectionNum}</span>
+      <span style={{ fontSize: compact ? 11 : 12, color: c.text, fontWeight: 500 }}>{sec.title}</span>
+      <span style={{
+        fontSize: 10, fontWeight: 700, background: c.border, color: c.text,
+        borderRadius: 10, padding: "1px 6px", marginLeft: 2,
+      }}>{c.label}</span>
+    </div>
+  );
+}
+
+// ─── STATUS PILL ─────────────────────────────────────────────────────────────
+function StatusPill({ status, onClick }) {
+  const c = STATUS_COLORS[status];
+  return (
+    <button onClick={onClick} style={{
+      background: c.bg, color: c.text, border: `1.5px solid ${c.border}`,
+      borderRadius: 20, padding: "2px 10px", fontSize: 11, fontWeight: 600,
+      cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 5,
+    }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: c.dot, display: "inline-block" }} />
+      {status}
+    </button>
+  );
+}
+
+// ─── INFO BLOCK ──────────────────────────────────────────────────────────────
+function InfoBlock({ title, accent, muted, children }) {
+  return (
+    <div style={{
+      background: muted ? "#FAFAFA" : "#F9FAFB",
+      borderRadius: 8, padding: "10px 12px",
+      borderLeft: `3px solid ${muted ? "#D1D5DB" : accent}`,
+    }}>
+      <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: muted ? "#9CA3AF" : accent, marginBottom: 5 }}>{title}</div>
+      <div style={{ fontSize: 13, color: muted ? "#9CA3AF" : "#374151", lineHeight: 1.6 }}>{children}</div>
+    </div>
+  );
+}
+
+// ─── UNIT CARD ───────────────────────────────────────────────────────────────
+function UnitCard({ unit, unitState, onStatusChange, onNoteChange }) {
+  const [open, setOpen] = useState(false);
+  const statuses = SKILL_LABELS.map(s => unitState?.skills?.[s] || (unit.unitDone ? "Completed" : "Not begun"));
+  const doneCount = statuses.filter(s => s === "Completed").length;
+  const pct = Math.round((doneCount / SKILL_LABELS.length) * 100);
+  const allDone = unit.unitDone || doneCount === SKILL_LABELS.length;
+  const anyReview = statuses.some(s => s === "Review needed");
+  const anyInProg = statuses.some(s => s === "In progress");
+  const cardBorder = allDone ? "#10B981" : anyReview ? "#F59E0B" : anyInProg ? "#3B82F6" : "#D1D5DB";
+
+  return (
+    <div style={{
+      background: "#fff", borderRadius: 12,
+      border: `1px solid #E5E7EB`, borderLeft: `4px solid ${cardBorder}`,
+      marginBottom: 12, overflow: "hidden",
+      boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+    }}>
+      {/* Header row */}
+      <div onClick={() => setOpen(o => !o)} style={{
+        cursor: "pointer", padding: "14px 18px",
+        display: "flex", alignItems: "center", gap: 14,
+      }}>
+        <span style={{
+          width: 32, height: 32, borderRadius: 8,
+          background: allDone ? "#D1FAE5" : "#F0F7F2",
+          color: allDone ? "#065F46" : "#1B5E34",
+          fontWeight: 800, fontSize: 13,
+          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+        }}>
+          {allDone ? "✓" : unit.id}
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: "#111827" }}>Unit {unit.id}: {unit.title}</div>
+          <div style={{ fontSize: 12, color: "#6B7280", marginTop: 2 }}>
+            pp. {unit.pages} · Sem {unit.sem} · Wks {unit.weeks} ·{" "}
+            <span style={{ color: "#7C3AED", fontWeight: 600 }}>OEGC {unit.oegcSections.map(n => `S${n}`).join(", ")}</span>
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+          <div style={{ width: 56, height: 5, background: "#E5E7EB", borderRadius: 4, overflow: "hidden" }}>
+            <div style={{ width: `${allDone ? 100 : pct}%`, height: "100%", background: allDone ? "#10B981" : "#3B82F6", borderRadius: 4 }} />
+          </div>
+          <span style={{ fontSize: 12, color: "#9CA3AF", width: 32 }}>{allDone ? 100 : pct}%</span>
+          <span style={{ fontSize: 18, color: "#9CA3AF", display: "inline-block", transform: open ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>›</span>
+        </div>
+      </div>
+
+      {unit.milestone && (
+        <div style={{ background: "#FEF3C7", borderTop: "1px dashed #F59E0B", padding: "7px 18px", fontSize: 12, fontWeight: 700, color: "#92400E" }}>
+          {unit.milestone}
+        </div>
+      )}
+
+      {open && (
+        <div style={{ padding: "0 18px 18px", borderTop: "1px solid #F3F4F6" }}>
+          {/* OEGC Grammar Track */}
+          <div style={{ marginTop: 16, background: "#F5F3FF", borderRadius: 10, padding: "12px 14px", border: "1px solid #DDD6FE" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#7C3AED", marginBottom: 8 }}>
+              📘 OEGC Grammar Sections — taught this unit
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+              {unit.oegcSections.map(n => <OegcBadge key={n} sectionNum={n} compact />)}
+            </div>
+            <div style={{ fontSize: 12, color: "#6B7280", fontStyle: "italic" }}>{unit.oegcNote}</div>
+          </div>
+
+          {/* GE9 Grammar */}
+          <div style={{ marginTop: 10, background: "#F9FAFB", borderRadius: 10, padding: "10px 14px", border: "1px solid #E5E7EB" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9CA3AF", marginBottom: 6 }}>
+              📖 GE9 Grammar (textbook — for awareness only, not taught from book)
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 6 }}>
+              {unit.ge9Grammar.map(g => (
+                <span key={g} style={{ fontSize: 11, background: "#F3F4F6", color: "#6B7280", border: "1px solid #E5E7EB", borderRadius: 6, padding: "2px 8px" }}>{g}</span>
+              ))}
+            </div>
+            <div style={{ fontSize: 12, color: "#9CA3AF", fontStyle: "italic" }}>{unit.ge9GrammarNote}</div>
+          </div>
+
+          {/* Skills tracker */}
+          <div style={{ marginTop: 16 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9CA3AF", marginBottom: 10 }}>Progress Tracker</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {SKILL_LABELS.map(skill => {
+                const current = unitState?.skills?.[skill] || (unit.unitDone ? "Completed" : "Not begun");
+                const idx = STATUS.indexOf(current);
+                const next = STATUS[(idx + 1) % STATUS.length];
+                return (
+                  <div key={skill} style={{ display: "flex", alignItems: "center", gap: 6, background: "#F9FAFB", borderRadius: 8, padding: "5px 10px 5px 8px" }}>
+                    <span style={{ fontSize: 12, color: "#374151", fontWeight: 500, marginRight: 4 }}>{skill}</span>
+                    <StatusPill status={current} onClick={() => onStatusChange(unit.id, skill, next)} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Vocab + skills grid */}
+          <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <InfoBlock title={`Vocabulary — ${unit.vocabThemes.join(" · ")}`} accent="#0369A1">
+              <div style={{ marginBottom: 4 }}><span style={{ fontWeight: 600 }}>Core: </span>{unit.coreVocab.join(", ")}</div>
+              <div style={{ marginBottom: 4 }}><span style={{ fontWeight: 600 }}>Word families: </span>{unit.wordFamilies.join(" | ")}</div>
+              <div><span style={{ fontWeight: 600 }}>Phrasal verbs (EPVIU): </span>{unit.epviu.join(", ")}</div>
+            </InfoBlock>
+            <InfoBlock title="Use of English (GE9)" accent="#065F46">{unit.uoe.type}</InfoBlock>
+            <InfoBlock title="✏️ Writing Tasks" accent="#1B5E34">{unit.writing}</InfoBlock>
+            <InfoBlock title="🗣️ Speaking Tasks" accent="#1B5E34">{unit.speaking}</InfoBlock>
+          </div>
+          <div style={{ marginTop: 10 }}>
+            <InfoBlock title="🎧 Listening" accent="#6B7280">{unit.listening}</InfoBlock>
+          </div>
+
+          {/* Notes */}
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: "#9CA3AF", marginBottom: 6 }}>Notes / Teacher Remarks</div>
+            <textarea
+              value={unitState?.notes || ""}
+              onChange={e => onNoteChange(unit.id, e.target.value)}
+              placeholder="Add notes, gaps noticed, what needs revisiting…"
+              style={{
+                width: "100%", minHeight: 60, borderRadius: 8,
+                border: "1.5px solid #E5E7EB", padding: "8px 10px",
+                fontSize: 13, color: "#374151", background: "#FAFAFA",
+                resize: "vertical", fontFamily: "inherit", boxSizing: "border-box",
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── OEGC OVERVIEW ───────────────────────────────────────────────────────────
+function OegcOverview() {
+  const statusInfo = {
+    done:   { label: "Done ✓",    bg: "#D1FAE5", text: "#065F46", border: "#6EE7B7" },
+    review: { label: "Review ⚠", bg: "#FEF3C7", text: "#92400E", border: "#FCD34D" },
+    next:   { label: "Next ▶",   bg: "#DBEAFE", text: "#1D4ED8", border: "#93C5FD" },
+    ahead:  { label: "Upcoming",  bg: "#F3F4F6", text: "#6B7280", border: "#E5E7EB" },
+  };
+  const unitForSection = {};
+  UNITS.forEach(u => u.oegcSections.forEach(s => { unitForSection[s] = u.id; }));
+  return (
+    <div>
+      <div style={{ background: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: 10, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: "#5B21B6" }}>
+        <b>Grammar track status:</b> S1–S5 ✓ done · S11 (articles) ✓ done —{" "}
+        <span style={{ color: "#92400E", fontWeight: 700 }}>S5 + S11 still under review</span> ·{" "}
+        <span style={{ color: "#1D4ED8", fontWeight: 700 }}>S6 (modal verbs) starting now</span>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 8 }}>
+        {Object.entries(OEGC_SECTIONS).map(([num, sec]) => {
+          const n = Number(num);
+          const st = OEGC_STATUS[n];
+          const c = statusInfo[st];
+          const uid = unitForSection[n];
+          const unitTitle = uid ? UNITS.find(u => u.id === uid)?.title : "—";
+          return (
+            <div key={n} style={{
+              background: c.bg, border: `1.5px solid ${c.border}`,
+              borderRadius: 10, padding: "10px 14px",
+              display: "flex", gap: 10, alignItems: "flex-start",
+            }}>
+              <span style={{ fontWeight: 800, fontSize: 16, color: c.text, minWidth: 28 }}>S{n}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 13, color: c.text }}>{sec.title}</div>
+                <div style={{ fontSize: 11, color: c.text, opacity: 0.75 }}>pp. {sec.pages}</div>
+                {uid && <div style={{ fontSize: 11, color: c.text, marginTop: 2, opacity: 0.7 }}>→ GE9 Unit {uid}: {unitTitle}</div>}
+              </div>
+              <span style={{ fontSize: 11, fontWeight: 700, background: c.border, color: c.text, borderRadius: 10, padding: "1px 7px", whiteSpace: "nowrap" }}>
+                {c.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── YEAR OVERVIEW ───────────────────────────────────────────────────────────
+function YearOverview({ state }) {
+  function unitStatus(unit) {
+    if (unit.unitDone) return "Completed";
+    const statuses = SKILL_LABELS.map(s => state[unit.id]?.skills?.[s] || "Not begun");
+    if (statuses.every(s => s === "Completed")) return "Completed";
+    if (statuses.some(s => s === "Review needed")) return "Review needed";
+    if (statuses.some(s => s === "In progress")) return "In progress";
+    return "Not begun";
+  }
+  const sem1 = UNITS.filter(u => u.sem === 1);
+  const sem2 = UNITS.filter(u => u.sem === 2);
+
+  function SemBlock({ units, label }) {
+    return (
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ fontWeight: 700, fontSize: 13, color: "#1B5E34", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>{label}</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>
+          {units.map(unit => {
+            const st = unitStatus(unit);
+            const c = STATUS_COLORS[st];
+            return (
+              <div key={unit.id} style={{ background: c.bg, border: `1.5px solid ${c.border}`, borderRadius: 10, padding: "12px 14px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <span style={{ fontWeight: 800, fontSize: 18, color: "#D1D5DB" }}>U{unit.id}</span>
+                  <span style={{ fontSize: 10, background: c.dot, color: "#fff", borderRadius: 10, padding: "1px 7px", fontWeight: 700 }}>{st}</span>
+                </div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "#111827", marginTop: 4 }}>{unit.title}</div>
+                <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>pp. {unit.pages} · Wks {unit.weeks}</div>
+                <div style={{ fontSize: 11, color: "#7C3AED", fontWeight: 600, marginTop: 4 }}>
+                  OEGC {unit.oegcSections.map(n => `S${n}`).join(", ")}
+                </div>
+                {unit.milestone && <div style={{ fontSize: 11, color: "#B45309", fontWeight: 700, marginTop: 4 }}>🏁 Milestone</div>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 10, padding: "12px 16px", marginBottom: 20, fontSize: 13, color: "#065F46" }}>
+        <b>Global English 9 · 9 units · 37 weeks</b><br/>
+        Vocabulary &amp; skills from GE9 · Grammar tracked separately via Oxford English Grammar Course (OEGC) · Phrasal verbs from EPVIU
+      </div>
+      <SemBlock units={sem1} label="Semester 1 — Units 1–4" />
+      <SemBlock units={sem2} label="Semester 2 — Units 5–9" />
+    </div>
+  );
+}
+
+// ─── MAIN APP ────────────────────────────────────────────────────────────────
+const STORAGE_KEY = "ge9-curriculum-v1";
+
+function App() {
+  const [tab, setTab] = useState("units");
+  const [unitStates, setUnitStates] = useState({});
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const result = storage.get(STORAGE_KEY);
+    if (result?.value) {
+      try { setUnitStates(JSON.parse(result.value)); } catch {}
+    }
+    setLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+    storage.set(STORAGE_KEY, JSON.stringify(unitStates));
+  }, [unitStates, loaded]);
+
+  function handleStatusChange(unitId, skill, newStatus) {
+    setUnitStates(prev => ({
+      ...prev,
+      [unitId]: { ...prev[unitId], skills: { ...(prev[unitId]?.skills || {}), [skill]: newStatus } }
+    }));
+  }
+
+  function handleNoteChange(unitId, note) {
+    setUnitStates(prev => ({ ...prev, [unitId]: { ...prev[unitId], notes: note } }));
+  }
+
+  const allPairs = UNITS.flatMap(u => SKILL_LABELS.map(s => ({ uid: u.id, s, done: u.unitDone })));
+  const total  = allPairs.length;
+  const done   = allPairs.filter(({ uid, s, done: d }) => d || unitStates[uid]?.skills?.[s] === "Completed").length;
+  const inProg = allPairs.filter(({ uid, s }) => unitStates[uid]?.skills?.[s] === "In progress").length;
+  const review = allPairs.filter(({ uid, s }) => unitStates[uid]?.skills?.[s] === "Review needed").length;
+  const pct    = Math.round((done / total) * 100);
+
+  if (!loaded) return <div style={{ padding: 40, textAlign: "center", color: "#9CA3AF" }}>Loading…</div>;
+
+  return (
+    <div style={{ fontFamily: "'Inter', system-ui, sans-serif", minHeight: "100vh", background: "#F4F7F4" }}>
+      {/* Header */}
+      <div style={{ background: "#1B5E34", color: "#fff", padding: "20px 24px" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em", opacity: 0.65, marginBottom: 3 }}>English Tutoring Plan · Grade 9</div>
+          <div style={{ fontSize: 22, fontWeight: 800 }}>Global English 9 — Full Year Curriculum</div>
+          <div style={{ fontSize: 13, opacity: 0.75, marginTop: 2 }}>
+            Vocabulary from GE9 · Grammar from Oxford English Grammar Course · Phrasal Verbs from EPVIU
+          </div>
+          <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.2)", borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ width: `${pct}%`, height: "100%", background: "#4ADE80", borderRadius: 4 }} />
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 700, minWidth: 38 }}>{pct}%</span>
+          </div>
+          <div style={{ display: "flex", gap: 14, marginTop: 7, fontSize: 12, opacity: 0.8, flexWrap: "wrap" }}>
+            <span>✅ Done: {done}</span>
+            <span>🔵 In progress: {inProg}</span>
+            <span>🟡 Review needed: {review}</span>
+            <span>⬜ Not begun: {total - done - inProg - review}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ background: "#fff", borderBottom: "1px solid #E5E7EB" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto", display: "flex" }}>
+          {[["units", "Unit Plans"], ["oegc", "OEGC Track"], ["overview", "Year Overview"]].map(([key, label]) => (
+            <button key={key} onClick={() => setTab(key)} style={{
+              padding: "12px 22px", fontSize: 13, fontWeight: 600, cursor: "pointer",
+              background: "none", border: "none",
+              borderBottom: tab === key ? "3px solid #1B5E34" : "3px solid transparent",
+              color: tab === key ? "#1B5E34" : "#6B7280",
+            }}>{label}</button>
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ maxWidth: 900, margin: "0 auto", padding: "24px 16px" }}>
+        {tab === "units" && (
+          <div>
+            <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap", alignItems: "center" }}>
+              {STATUS.map(s => {
+                const c = STATUS_COLORS[s];
+                return (
+                  <span key={s} style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, color: c.text, background: c.bg, border: `1px solid ${c.border}`, borderRadius: 20, padding: "3px 10px" }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: c.dot }} />{s}
+                  </span>
+                );
+              })}
+              <span style={{ fontSize: 12, color: "#9CA3AF" }}>— click to cycle</span>
+            </div>
+            {UNITS.map(unit => (
+              <UnitCard key={unit.id} unit={unit} unitState={unitStates[unit.id]}
+                onStatusChange={handleStatusChange} onNoteChange={handleNoteChange} />
+            ))}
+          </div>
+        )}
+        {tab === "oegc" && <OegcOverview />}
+        {tab === "overview" && <YearOverview state={unitStates} />}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
