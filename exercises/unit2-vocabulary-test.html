@@ -45,6 +45,7 @@
   }
   .question:last-child{border-bottom:none;}
   .qtext{font-weight:600; margin:0 0 8px; font-size:.96rem;}
+  .highlight{color:red; font-weight:700;}
   .options{display:flex; flex-direction:column; gap:6px;}
   .options label{
     display:flex; align-items:center; gap:8px; padding:6px 10px; border:1px solid var(--border);
@@ -215,10 +216,10 @@ const quizData = [
       {value:"4", label:"4. Stay calm and think clearly under pressure"}
     ],
     questions: [
-      { q: "A. She always gets involved in community projects to help others.", answer: "3" },
-      { q: "B. He managed to keep a cool head even during the emergency.", answer: "4" },
-      { q: "C. Doctors speculate that lack of sleep contributes to heart disease.", answer: "1" },
-      { q: "D. A balanced diet can help restore your energy levels.", answer: "2" }
+      { q: "A. She always <span class=\"highlight\">gets involved in</span> community projects to help others.", answer: "3" },
+      { q: "B. He managed to <span class=\"highlight\">keep a cool head</span> even during the emergency.", answer: "4" },
+      { q: "C. Doctors <span class=\"highlight\">speculate</span> that lack of sleep contributes to heart disease.", answer: "1" },
+      { q: "D. A balanced diet can help <span class=\"highlight\">restore</span> your energy levels.", answer: "2" }
     ]
   },
 
@@ -315,7 +316,7 @@ quizData.forEach(section => {
 
     const qText = document.createElement("p");
     qText.className = "qtext";
-    qText.textContent = item.q;
+    qText.innerHTML = item.q;
     qDiv.appendChild(qText);
 
     if (section.type === "mcq") {

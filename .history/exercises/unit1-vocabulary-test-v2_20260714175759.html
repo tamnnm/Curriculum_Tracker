@@ -45,7 +45,6 @@
   }
   .question:last-child{border-bottom:none;}
   .qtext{font-weight:600; margin:0 0 8px; font-size:.96rem;}
-  .highlight{color:red; font-weight:700;}
   .options{display:flex; flex-direction:column; gap:6px;}
   .options label{
     display:flex; align-items:center; gap:8px; padding:6px 10px; border:1px solid var(--border);
@@ -80,6 +79,7 @@
     border-radius:10px; padding:14px 18px; margin-bottom:18px; text-align:center; font-size:1.1rem; font-weight:700;
   }
   #scoreBox .sub{font-size:.85rem; font-weight:500; color:var(--muted); margin-top:4px;}
+  .required-note{color:var(--red); font-size:.85rem; margin-top:6px;}
   @media print{ .toolbar{display:none;} }
 </style>
 </head>
@@ -118,7 +118,6 @@
    - V5: item 4 "flexibility"->"skills" and item 6 "bad influence"->"temptation"
          (fixes an unnatural collocation and a duplicate-answer overlap)
    - V7: correct-answer position reshuffled across A-D (was always D)
-   - V6: phrasal verbs wrapped in <span class="highlight"> to render red
    type: "mcq" (radio A-D), "dropdown" (select), "text" (typed answer)
    ============================================================ */
 const quizData = [
@@ -225,10 +224,10 @@ const quizData = [
       {value:"4", label:"4. Begin or participate in industrial action"}
     ],
     questions: [
-      { q: "A. The teacher <span class=\"highlight\">told him off</span> for using his phone in class.", answer: "3" },
-      { q: "B. The factory workers decided to <span class=\"highlight\">go on strike</span> after negotiations failed.", answer: "4" },
-      { q: "C. You should <span class=\"highlight\">concentrate on</span> the task instead of chatting.", answer: "2" },
-      { q: "D. Many teenagers eventually <span class=\"highlight\">succumb to</span> peer pressure.", answer: "1" }
+      { q: "A. The teacher told him off for using his phone in class.", answer: "3" },
+      { q: "B. The factory workers decided to go on strike after negotiations failed.", answer: "4" },
+      { q: "C. You should concentrate on the task instead of chatting.", answer: "2" },
+      { q: "D. Many teenagers eventually succumb to peer pressure.", answer: "1" }
     ]
   },
 
@@ -328,7 +327,7 @@ quizData.forEach(section => {
 
     const qText = document.createElement("p");
     qText.className = "qtext";
-    qText.innerHTML = item.q;
+    qText.textContent = item.q;
     qDiv.appendChild(qText);
 
     if (section.type === "mcq") {

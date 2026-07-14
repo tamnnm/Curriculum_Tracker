@@ -45,6 +45,7 @@
   }
   .question:last-child{border-bottom:none;}
   .qtext{font-weight:600; margin:0 0 8px; font-size:.96rem;}
+  .highlight{color:red; font-weight:700;}
   .options{display:flex; flex-direction:column; gap:6px;}
   .options label{
     display:flex; align-items:center; gap:8px; padding:6px 10px; border:1px solid var(--border);
@@ -215,10 +216,10 @@ const quizData = [
       {value:"4", label:"4. Raised (as a child)"}
     ],
     questions: [
-      { q: "A. The meeting was called off because of the storm.", answer: "2" },
-      { q: "B. She came across an old photograph while cleaning the attic.", answer: "1" },
-      { q: "C. He was brought up by his grandparents after his parents passed away.", answer: "4" },
-      { q: "D. They finally sorted out their disagreement over dinner.", answer: "3" }
+      { q: "A. The meeting was <span class=\"highlight\">called off</span> because of the storm.", answer: "2" },
+      { q: "B. She <span class=\"highlight\">came across</span> an old photograph while cleaning the attic.", answer: "1" },
+      { q: "C. He was <span class=\"highlight\">brought up</span> by his grandparents after his parents passed away.", answer: "4" },
+      { q: "D. They finally <span class=\"highlight\">sorted out</span> their disagreement over dinner.", answer: "3" }
     ]
   },
 
@@ -315,7 +316,7 @@ quizData.forEach(section => {
 
     const qText = document.createElement("p");
     qText.className = "qtext";
-    qText.textContent = item.q;
+    qText.innerHTML = item.q;
     qDiv.appendChild(qText);
 
     if (section.type === "mcq") {
