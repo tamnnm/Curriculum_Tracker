@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Curriculum Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --green:#1B5E34; --green-light:#F0F7F2;
+    --purple:#5B21B6; --purple-light:#F5F3FF;
+    --gray-bg:#F4F7F4; --border:#E5E7EB;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--gray-bg);color:#111827;}
+  .header{background:var(--green);color:#fff;padding:20px 24px;}
+  .header-inner{max-width:900px;margin:0 auto;}
+  .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.12em;opacity:.65;margin-bottom:3px;}
+  .h1{font-size:22px;font-weight:800;}
+  .sub{font-size:13px;opacity:.75;margin-top:2px;}
+  .progress-row{margin-top:14px;display:flex;align-items:center;gap:14px;}
+  .progress-track{flex:1;height:6px;background:rgba(255,255,255,.2);border-radius:4px;overflow:hidden;}
+  .progress-fill{height:100%;background:#4ADE80;border-radius:4px;}
+  .stats-row{display:flex;gap:14px;margin-top:7px;font-size:12px;opacity:.85;flex-wrap:wrap;}
+  .tabs{background:#fff;border-bottom:1px solid var(--border);}
+  .tabs-inner{max-width:900px;margin:0 auto;display:flex;flex-wrap:wrap;}
+  .tab-btn{padding:12px 20px;font-size:13px;font-weight:600;cursor:pointer;background:none;border:none;border-bottom:3px solid transparent;color:#6B7280;}
+  .tab-btn.active{border-bottom-color:var(--green);color:var(--green);}
+  .content{max-width:900px;margin:0 auto;padding:24px 16px;}
+  .banner{background:#FEF3C7;border:1px solid #FCD34D;color:#92400E;border-radius:8px;padding:10px 14px;font-size:12.5px;margin-bottom:16px;}
+  .legend{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;font-size:12px;color:#9CA3AF;}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;border-radius:20px;padding:3px 10px;border:1px solid;}
+  .dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+  .card{background:#fff;border-radius:12px;border:1px solid var(--border);margin-bottom:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+  .card-head{cursor:pointer;padding:14px 18px;display:flex;align-items:center;gap:14px;}
+  .badge-num{width:32px;height:32px;border-radius:8px;background:var(--green-light);color:var(--green);font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .badge-num.done{background:#D1FAE5;color:#065F46;}
+  .card-title{font-weight:700;font-size:15px;}
+  .card-meta{font-size:12px;color:#6B7280;margin-top:2px;}
+  .grammar-tag{color:#7C3AED;font-weight:600;}
+  .card-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+  .mini-track{width:56px;height:5px;background:#E5E7EB;border-radius:4px;overflow:hidden;}
+  .mini-fill{height:100%;background:#3B82F6;border-radius:4px;}
+  .mini-fill.done{background:#10B981;}
+  .pct-label{font-size:12px;color:#9CA3AF;width:32px;}
+  .chev{font-size:18px;color:#9CA3AF;display:inline-block;transition:transform .2s;}
+  .chev.open{transform:rotate(90deg);}
+  .milestone{background:#FEF3C7;border-top:1px dashed #F59E0B;padding:7px 18px;font-size:12px;font-weight:700;color:#92400E;}
+  .card-body{padding:0 18px 18px;border-top:1px solid #F3F4F6;}
+  .box{margin-top:14px;border-radius:10px;padding:12px 14px;border:1px solid;}
+  .box-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
+  .badge-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+  .grammar-badge{display:inline-flex;align-items:center;gap:6px;border:1.5px solid;border-radius:8px;padding:4px 8px;font-size:11px;}
+  .grammar-badge b{font-weight:800;}
+  .tag{font-size:11px;background:#F3F4F6;color:#6B7280;border:1px solid var(--border);border-radius:6px;padding:2px 8px;}
+  .note{font-size:12px;color:#6B7280;font-style:italic;}
+  .skill-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .skill-chip{display:flex;align-items:center;gap:6px;background:#F9FAFB;border-radius:8px;padding:5px 10px;font-size:12px;}
+  .info-grid{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media(max-width:640px){.info-grid{grid-template-columns:1fr;}}
+  .info-block{background:#F9FAFB;border-radius:8px;padding:10px 12px;border-left:3px solid #0369A1;font-size:13px;line-height:1.6;color:#374151;}
+  .info-block .bt{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#0369A1;margin-bottom:5px;}
+  .sessions{margin-top:14px;}
+  .session-row{border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12.5px;}
+  .session-row .wk{font-weight:700;color:var(--green);margin-right:8px;}
+  .session-row .topic{font-weight:600;}
+  .session-row .notes{color:#4B5563;margin-top:4px;white-space:pre-wrap;}
+  .grammar-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  @media(max-width:640px){.grammar-grid{grid-template-columns:1fr;}}
+  .grammar-cell{border:1.5px solid;border-radius:10px;padding:10px 14px;display:flex;gap:10px;align-items:flex-start;}
+  .grammar-cell .num{font-weight:800;font-size:16px;min-width:28px;}
+  .grammar-cell .st{font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px;white-space:nowrap;}
+  .parent-card{border-radius:10px;padding:12px 14px;border:1.5px solid;margin-bottom:10px;}
+  .parent-top{display:flex;justify-content:space-between;align-items:center;}
+  .parent-note{font-size:12.5px;color:#374151;margin-top:6px;}
+  .footer-note{font-size:11px;color:#9CA3AF;text-align:center;padding:18px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ─── STUDENTS ────────────────────────────────────────────────────────────
+// One entry per student. Open this page with ?student=<key> to load that
+// student's sheet and subject layout, e.g. index.html?student=tram
+// With no ?student= param, DEFAULT_STUDENT is used (keeps old bookmarks working).
+//
+// "subjectTrack" is an optional extra tab + per-unit box for subjects that
+// track a separate grammar/skill syllabus alongside the unit tracker (the
+// old "grammar" section). Subjects that don't have one just set enabled:false
+// (or omit subjectTrack entirely) and that tab/box/tag won't be shown.
+const DEFAULT_STUDENT = "tra_eng";
+
+const STUDENTS = {
+  tra_eng: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk",
+    eyebrow: "English Tutoring Plan · Grade 9",
+    title: "Global English 9 — Full Year Curriculum",
+    subtitle: "Vocabulary from GE9 · Grammar from Oxford English Grammar Course · Phrasal Verbs from EPVIU",
+    skills: ["Vocabulary","Grammar (grammar)","Writing","Speaking","Listening","Chapter Test"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Track",
+      sheetTab: "Grammar Track",
+      tagLabel: "Grammar",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "📘 Grammar — this unit",
+    },
+  },
+  tra_math: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk",
+    eyebrow: "English Tutoring Plan · Grade 9",
+    title: "Global English 9 — Full Year Curriculum",
+    subtitle: "Math Vietnam",
+    skills: ["Vocabulary","Grammar (grammar)","Writing","Speaking","Listening","Chapter Test"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Track",
+      sheetTab: "Math Track",
+      tagLabel: "Grammar",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "📘 Grammar — this unit",
+    },
+  },
+  tra_science: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk",
+    eyebrow: "English Tutoring Plan · Grade 9",
+    title: "Global English 9 — Full Year Curriculum",
+    subtitle: "Vocabulary from GE9 · Grammar from Oxford English Grammar Course · Phrasal Verbs from EPVIU",
+    skills: ["Vocabulary","Grammar (grammar)","Writing","Speaking","Listening","Chapter Test"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Track",
+      sheetTab: "Grammar Track",
+      tagLabel: "Grammar",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "📘 Grammar — this unit",
+    },
+  },
+  my_eng: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk",
+    eyebrow: "English Tutoring Plan · Grade 9",
+    title: "Global English 9 — Full Year Curriculum",
+    subtitle: "Vocabulary from GE9 · Grammar from Oxford English Grammar Course · Phrasal Verbs from EPVIU",
+    skills: ["Vocabulary","Grammar (grammar)","Writing","Speaking","Listening","Chapter Test"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Track",
+      sheetTab: "Grammar Track",
+      tagLabel: "Grammar",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "📘 Grammar — this unit",
+    },
+  },
+  my_math: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk",
+    eyebrow: "English Tutoring Plan · Grade 9",
+    title: "Global English 9 — Full Year Curriculum",
+    subtitle: "Vocabulary from GE9 · Grammar from Oxford English Grammar Course · Phrasal Verbs from EPVIU",
+    skills: ["Vocabulary","Grammar (grammar)","Writing","Speaking","Listening","Chapter Test"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Track",
+      sheetTab: "Grammar Track",
+      tagLabel: "Grammar",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "📘 Grammar — this unit",
+    },
+  },
+  my_science: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk",
+    eyebrow: "English Tutoring Plan · Grade 9",
+    title: "Global English 9 — Full Year Curriculum",
+    subtitle: "Vocabulary from GE9 · Grammar from Oxford English Grammar Course · Phrasal Verbs from EPVIU",
+    skills: ["Vocabulary","Grammar (grammar)","Writing","Speaking","Listening","Chapter Test"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Track",
+      sheetTab: "Grammar Track",
+      tagLabel: "Grammar",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "📘 Grammar — this unit",
+    },
+  },
+  bach: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk",
+    eyebrow: "English Tutoring Plan · Grade 9",
+    title: "Global English 9 — Full Year Curriculum",
+    subtitle: "Vocabulary from GE9 · Grammar from Oxford English Grammar Course · Phrasal Verbs from EPVIU",
+    skills: ["Vocabulary","Grammar (grammar)","Writing","Speaking","Listening","Chapter Test"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Track",
+      sheetTab: "Grammar Track",
+      tagLabel: "Grammar",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "📘 Grammar — this unit",
+    },
+  },
+  giang: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk",
+    eyebrow: "English Tutoring Plan · Grade 9",
+    title: "Global English 9 — Full Year Curriculum",
+    subtitle: "Vocabulary from GE9 · Grammar from Oxford English Grammar Course · Phrasal Verbs from EPVIU",
+    skills: ["Vocabulary","Grammar (grammar)","Writing","Speaking","Listening","Chapter Test"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Track",
+      sheetTab: "Grammar Track",
+      tagLabel: "Grammar",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "📘 Grammar — this unit",
+    },
+  },
+
+
+
+  // Example for a student on a subject with no separate grammar track —
+  // copy this block, fill in the sheet ID, and add ?student=<key> to the URL.
+  // example: {
+  //   sheetId: "",
+  //   eyebrow: "Math Tutoring Plan",
+  //   title: "Algebra II — Full Year Curriculum",
+  //   subtitle: "Practice sets and problem-solving skills",
+  //   skills: ["Concepts","Practice Problems","Homework","Quiz"],
+  //   subjectTrack: { enabled: false },
+  // },
+};
+
+const params = new URLSearchParams(location.search);
+const studentKey = params.get("student") || DEFAULT_STUDENT;
+const STUDENT = STUDENTS[studentKey];
+
+// ──────────────────────────────────────────────────────────────────────
+
+const SKILLS = STUDENT ? STUDENT.skills : [];
+const SUBJECT_TRACK = (STUDENT && STUDENT.subjectTrack) || { enabled: false };
+const CONFIG = {
+  SHEET_ID: params.get("sheet") || (STUDENT ? STUDENT.sheetId : ""),
+};
+const STATUS_COLORS = {
+  "Not begun":     {bg:"#F3F4F6",text:"#6B7280",dot:"#9CA3AF",border:"#E5E7EB"},
+  "In progress":   {bg:"#DBEAFE",text:"#1D4ED8",dot:"#3B82F6",border:"#93C5FD"},
+  "Review needed": {bg:"#FEF3C7",text:"#92400E",dot:"#F59E0B",border:"#FCD34D"},
+  "Completed":     {bg:"#D1FAE5",text:"#065F46",dot:"#10B981",border:"#6EE7B7"},
+};
+const GRAMMAR_COLORS = {
+  "Done":     {bg:"#D1FAE5",text:"#065F46",border:"#6EE7B7"},
+  "Review":   {bg:"#FEF3C7",text:"#92400E",border:"#FCD34D"},
+  "Next":     {bg:"#DBEAFE",text:"#1D4ED8",border:"#93C5FD"},
+  "Upcoming": {bg:"#F3F4F6",text:"#6B7280",border:"#E5E7EB"},
+};
+
+// ─── Sample data (used only if CONFIG.SHEET_ID is empty or fetch fails) ──
+const SAMPLE = {
+  tracker: [
+    {"Unit #":1,"Title":"Views and Voices","Pages":"11-32","Semester":1,"Weeks":"1-4","Vocabulary":"Completed","Grammar (grammar)":"Completed","Writing":"Completed","Speaking":"Completed","Listening":"Completed","Chapter Test":"Completed","% Complete":1,"Sections":"S1, S2, S3","Milestone":"","Notes":""},
+    {"Unit #":2,"Title":"Well-being","Pages":"33-54","Semester":1,"Weeks":"5-8","Vocabulary":"In progress","Grammar (grammar)":"Review needed","Writing":"In progress","Speaking":"Not begun","Listening":"Not begun","Chapter Test":"Not begun","% Complete":0,"Sections":"S5, S11, S6","Milestone":"","Notes":"Sample data — connect your Google Sheet."},
+    {"Unit #":3,"Title":"Tourism","Pages":"55-76","Semester":1,"Weeks":"9-12","Vocabulary":"Not begun","Grammar (grammar)":"Not begun","Writing":"Not begun","Speaking":"Not begun","Listening":"Not begun","Chapter Test":"Not begun","% Complete":0,"Sections":"S7, S16","Milestone":"","Notes":""},
+  ],
+  details: [
+    {"Unit #":1,"Title":"Views and Voices","Sections & Notes":"S1, S2, S3 - Sections 1-3 completed.","GE9 Grammar (textbook, reference only)":"-ing forms; Present simple & continuous","GE9 Grammar Note":"Covered via S1-S2.","Vocabulary Themes":"Classroom interaction; Character and behaviour","Core Vocabulary":"responsible, stereotype, prejudice, confident, mature, peer, behaviour, attitude","Word Families":"stereotype -> stereotypical / stereotyping","Phrasal Verbs (EPVIU)":"speak up, put across, bring up, point out, go on about","Writing Tasks":"An email to a friend. An interpretation of a photo.","Speaking Tasks":"Give your views on talking in class.","Listening Tasks":"Talking in class. What it's like to be a teenager.","Use of English (GE9)":"-ing forms; Present simple and continuous"},
+    {"Unit #":2,"Title":"Well-being","Sections & Notes":"S5, S11, S6 - active review + starting modal verbs","GE9 Grammar (textbook, reference only)":"Abstract nouns; Must have/might have + past participle","GE9 Grammar Note":"Sample note.","Vocabulary Themes":"Food and health; Feelings and emotions","Core Vocabulary":"balanced diet, nutritious, well-being, anxiety, overwhelm, exhausted","Word Families":"nourish -> nourishment / nutritious","Phrasal Verbs (EPVIU)":"cut down on, give up, work out","Writing Tasks":"Interpret a photo and speculate.","Speaking Tasks":"Discuss opinions about food and health.","Listening Tasks":"Why is a balanced diet important?","Use of English (GE9)":"Abstract nouns; Comparative adjectives & adverbs"},
+    {"Unit #":3,"Title":"Tourism","Sections & Notes":"S7, S16","GE9 Grammar (textbook, reference only)":"Compound nouns; Past continuous passive","GE9 Grammar Note":"Sample note.","Vocabulary Themes":"Holidays; Responsible tourism","Core Vocabulary":"itinerary, sustainable, ecotourism, accommodation","Word Families":"accommodate -> accommodation","Phrasal Verbs (EPVIU)":"check in, check out, set off","Writing Tasks":"Write a travel blog.","Speaking Tasks":"Talk about holidays.","Listening Tasks":"Going on holiday.","Use of English (GE9)":"Compound nouns; Multi-word verbs"},
+  ],
+  grammar: [
+    {"Section":"S1","Grammar Point":"be and have","Pages":"1-12","Status":"Done","Taught in / Mapped to":"U1"},
+    {"Section":"S5","Grammar Point":"Perfect tenses","Pages":"47-70","Status":"Review","Taught in / Mapped to":"U2"},
+    {"Section":"S6","Grammar Point":"Modal verbs","Pages":"71-92","Status":"Next","Taught in / Mapped to":"U2"},
+    {"Section":"S7","Grammar Point":"Passives","Pages":"93-102","Status":"Upcoming","Taught in / Mapped to":"U3"},
+  ],
+  sessions: [
+    {"Week #":1,"Unit #":1,"Unit Title":"Views and Voices","Date":"","Session Topic":"Sample: intro to be/have","Lecture Notes":"Connect your Sheet to replace this sample.","Homework / Next Steps":""},
+    {"Week #":5,"Unit #":2,"Unit Title":"Well-being","Date":"","Session Topic":"","Lecture Notes":"","Homework / Next Steps":""},
+  ],
+};
+
+async function fetchSheetTab(name){
+  const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(name)}`;
+  const res = await fetch(url);
+  const text = await res.text();
+  const json = JSON.parse(text.substring(text.indexOf("{"), text.lastIndexOf("}")+1));
+  const cols = json.table.cols.map((c,i) => c.label || `col${i}`);
+  return json.table.rows.map(r => {
+    const obj = {};
+    cols.forEach((label,i) => { obj[label] = r.c[i] ? r.c[i].v : ""; });
+    return obj;
+  });
+}
+
+async function loadData(){
+  if (!CONFIG.SHEET_ID) return {...SAMPLE, isSample:true};
+  try {
+    const [tracker, details, grammar, sessions] = await Promise.all([
+      fetchSheetTab("Unit Tracker"),
+      fetchSheetTab("Unit Details"),
+      SUBJECT_TRACK.enabled ? fetchSheetTab(SUBJECT_TRACK.sheetTab) : Promise.resolve([]),
+      fetchSheetTab("Session Notes"),
+    ]);
+    return {tracker, details, grammar, sessions, isSample:false};
+  } catch(e){
+    console.error("Failed to load Google Sheet, showing sample data.", e);
+    return {...SAMPLE, isSample:true};
+  }
+}
+
+function el(html){ const d=document.createElement("div"); d.innerHTML=html.trim(); return d.firstChild; }
+
+function statusPill(status){
+  const c = STATUS_COLORS[status] || STATUS_COLORS["Not begun"];
+  return `<span class="pill" style="background:${c.bg};color:${c.text};border-color:${c.border}">
+    <span class="dot" style="background:${c.dot}"></span>${status || "Not begun"}</span>`;
+}
+
+function grammarBadge(code, title, status){
+  const c = GRAMMAR_COLORS[status] || GRAMMAR_COLORS["Upcoming"];
+  return `<span class="grammar-badge" style="background:${c.bg};color:${c.text};border-color:${c.border}">
+    <b>${code}</b> ${title}</span>`;
+}
+
+let DATA = null;
+let openCards = {};
+
+function render(){
+  const app = document.getElementById("app");
+  const tracker = DATA.tracker, details = DATA.details, = DATA.grammar, sessions = DATA.sessions;
+
+  const totalItems = tracker.length * SKILLS.length;
+  let doneCount = 0;
+  tracker.forEach(u => SKILLS.forEach(s => { if ((u[s]||"") === "Completed") doneCount++; }));
+  const pct = totalItems ? Math.round((doneCount/totalItems)*100) : 0;
+
+  app.innerHTML = `
+    <div class="header"><div class="header-inner">
+      <div class="eyebrow">${STUDENT.eyebrow}</div>
+      <div class="h1">${STUDENT.title}</div>
+      <div class="sub">${STUDENT.subtitle}</div>
+      <div class="progress-row">
+        <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <span style="font-size:13px;font-weight:700;min-width:38px">${pct}%</span>
+      </div>
+    </div></div>
+    <div class="tabs"><div class="tabs-inner" id="tabs"></div></div>
+    <div class="content" id="content"></div>
+    <div class="footer-note">${DATA.isSample ? "Showing sample data — set a sheetId for this student in the STUDENTS config (or pass ?sheet=) to connect a live Google Sheet." : "Live data from Google Sheets."}</div>
+  `;
+
+  const tabsDef = [["units","Unit Plans"]];
+  if (SUBJECT_TRACK.enabled) tabsDef.push(["grammar", SUBJECT_TRACK.tabLabel]);
+  tabsDef.push(["sessions","Session Notes"], ["parent","Parent View"]);
+  const tabsEl = document.getElementById("tabs");
+  let activeTab = window.__activeTab || "units";
+  if (!tabsDef.some(([key]) => key === activeTab)) activeTab = "units";
+  tabsDef.forEach(([key,label]) => {
+    const b = el(`<button class="tab-btn ${key===activeTab?"active":""}">${label}</button>`);
+    b.onclick = () => { window.__activeTab = key; render(); };
+    tabsEl.appendChild(b);
+  });
+
+  const content = document.getElementById("content");
+  if (DATA.isSample) content.appendChild(el(`<div class="banner">Sample preview data shown below. Set this student's sheetId in the STUDENTS config to see real progress.</div>`));
+
+  if (activeTab === "units") renderUnits(content, tracker, details, sessions);
+  else if (activeTab === "grammar") rendergrammar(content, grammar);
+  else if (activeTab === "sessions") renderSessions(content, sessions);
+  else if (activeTab === "parent") renderParent(content, tracker);
+}
+
+function renderUnits(content, tracker, details, sessions){
+  content.appendChild(el(`<div class="legend">
+    ${Object.keys(STATUS_COLORS).map(s=>{const c=STATUS_COLORS[s];return `<span class="pill" style="background:${c.bg};color:${c.text};border-color:${c.border}"><span class="dot" style="background:${c.dot}"></span>${s}</span>`}).join("")}
+    <span>— click a unit to expand</span>
+  </div>`));
+
+  const detailsByUnit = {};
+  details.forEach(d => detailsByUnit[d["Unit #"]] = d);
+  const sessionsByUnit = {};
+  sessions.forEach(s => { const k=s["Unit #"]; (sessionsByUnit[k] = sessionsByUnit[k]||[]).push(s); });
+
+  tracker.forEach(u => {
+    const uid = u["Unit #"];
+    const d = detailsByUnit[uid] || {};
+    const statuses = SKILLS.map(s => u[s] || "Not begun");
+    const doneCount = statuses.filter(s=>s==="Completed").length;
+    const allDone = doneCount === SKILLS.length;
+    const pct = Math.round((doneCount/SKILLS.length)*100);
+    const isOpen = !!openCards[uid];
+
+    const card = el(`<div class="card" style="border-left:4px solid ${allDone?"#10B981":statuses.includes("Review needed")?"#F59E0B":statuses.includes("In progress")?"#3B82F6":"#D1D5DB"}"></div>`);
+    const head = el(`<div class="card-head">
+      <span class="badge-num ${allDone?"done":""}">${allDone?"✓":uid}</span>
+      <div style="flex:1;min-width:0">
+        <div class="card-title">Unit ${uid}: ${u["Title"]}</div>
+        <div class="card-meta">pp. ${u["Pages"]} · Sem ${u["Semester"]} · Wks ${u["Weeks"]}${SUBJECT_TRACK.enabled ? ` · <span class="grammar-tag">${SUBJECT_TRACK.tagLabel} ${u[SUBJECT_TRACK.unitColumn]||""}</span>` : ""}</div>
+      </div>
+      <div class="card-right">
+        <div class="mini-track"><div class="mini-fill ${allDone?"done":""}" style="width:${allDone?100:pct}%"></div></div>
+        <span class="pct-label">${allDone?100:pct}%</span>
+        <span class="chev ${isOpen?"open":""}">›</span>
+      </div>
+    </div>`);
+    head.onclick = () => { openCards[uid] = !openCards[uid]; render(); };
+    card.appendChild(head);
+    if (u["Milestone"]) card.appendChild(el(`<div class="milestone">🏁 ${u["Milestone"]}</div>`));
+
+    if (isOpen){
+      const body = el(`<div class="card-body"></div>`);
+      if (SUBJECT_TRACK.enabled){
+        body.appendChild(el(`<div class="box" style="background:#F5F3FF;border-color:#DDD6FE;margin-top:16px">
+          <div class="box-title" style="color:#7C3AED">${SUBJECT_TRACK.boxTitle}</div>
+          <div class="note">${d[SUBJECT_TRACK.detailField]||""}</div>
+        </div>`));
+      }
+      body.appendChild(el(`<div class="box" style="background:#F9FAFB;border-color:#E5E7EB">
+        <div class="box-title" style="color:#9CA3AF">📖 GE9 Grammar (textbook reference)</div>
+        <div class="badge-row">${(d["GE9 Grammar (textbook, reference only)"]||"").split(";").map(g=>g.trim()).filter(Boolean).map(g=>`<span class="tag">${g}</span>`).join("")}</div>
+        <div class="note">${d["GE9 Grammar Note"]||""}</div>
+      </div>`));
+
+      const skillGrid = el(`<div class="skill-grid"></div>`);
+      SKILLS.forEach(s => skillGrid.appendChild(el(`<div class="skill-chip"><span>${s}</span>${statusPill(u[s]||"Not begun")}</div>`)));
+      body.appendChild(el(`<div style="margin-top:16px"><div class="box-title" style="color:#9CA3AF">Progress Tracker <span style="font-weight:400;text-transform:none;font-size:11px">(edit in Google Sheets)</span></div></div>`));
+      body.appendChild(skillGrid);
+
+      const info = el(`<div class="info-grid"></div>`);
+      info.appendChild(el(`<div class="info-block"><div class="bt">Vocabulary — ${d["Vocabulary Themes"]||""}</div>
+        <div><b>Core:</b> ${d["Core Vocabulary"]||""}</div>
+        <div><b>Word families:</b> ${d["Word Families"]||""}</div>
+        <div><b>Phrasal verbs:</b> ${d["Phrasal Verbs (EPVIU)"]||""}</div></div>`));
+      info.appendChild(el(`<div class="info-block" style="border-left-color:#065F46"><div class="bt" style="color:#065F46">Use of English (GE9)</div>${d["Use of English (GE9)"]||""}</div>`));
+      info.appendChild(el(`<div class="info-block" style="border-left-color:#1B5E34"><div class="bt" style="color:#1B5E34">✏️ Writing</div>${d["Writing Tasks"]||""}</div>`));
+      info.appendChild(el(`<div class="info-block" style="border-left-color:#1B5E34"><div class="bt" style="color:#1B5E34">🗣️ Speaking</div>${d["Speaking Tasks"]||""}</div>`));
+      body.appendChild(info);
+      body.appendChild(el(`<div class="info-block" style="margin-top:10px;border-left-color:#6B7280"><div class="bt" style="color:#6B7280">🎧 Listening</div>${d["Listening Tasks"]||""}</div>`));
+
+      const wkSessions = (sessionsByUnit[uid]||[]).filter(s=>s["Session Topic"]||s["Lecture Notes"]);
+      const sess = el(`<div class="sessions"><div class="box-title" style="color:#9CA3AF">📝 Lecture Notes by Week</div></div>`);
+      if (wkSessions.length){
+        wkSessions.forEach(s => sess.appendChild(el(`<div class="session-row">
+          <span class="wk">Wk ${s["Week #"]}</span><span class="topic">${s["Session Topic"]||"(no topic yet)"}</span>
+          ${s["Date"]?` · <span style="color:#9CA3AF">${s["Date"]}</span>`:""}
+          <div class="notes">${s["Lecture Notes"]||""}</div>
+          ${s["Homework / Next Steps"]?`<div class="notes" style="color:#7C3AED"><b>Homework:</b> ${s["Homework / Next Steps"]}</div>`:""}
+        </div>`)));
+      } else {
+        sess.appendChild(el(`<div class="note">No lecture notes logged yet for this unit's weeks — add them in the Session Notes tab of the Sheet.</div>`));
+      }
+      body.appendChild(sess);
+      card.appendChild(body);
+    }
+    content.appendChild(card);
+  });
+}
+
+function rendergrammar(content, grammar){
+  content.appendChild(el(`<div class="box" style="background:#F5F3FF;border-color:#DDD6FE;margin-bottom:16px">
+    <b>${SUBJECT_TRACK.tagLabel} track status</b> — updated live from the ${SUBJECT_TRACK.sheetTab} tab.
+  </div>`));
+  const grid = el(`<div class="grammar-grid"></div>`);
+  grammar.forEach(row => {
+    const st = row["Status"] || "Upcoming";
+    const c = GRAMMAR_COLORS[st] || GRAMMAR_COLORS["Upcoming"];
+    grid.appendChild(el(`<div class="grammar-cell" style="background:${c.bg};border-color:${c.border}">
+      <span class="num" style="color:${c.text}">${row["Section"]}</span>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:13px;color:${c.text}">${row["Grammar Point"]}</div>
+        <div style="font-size:11px;color:${c.text};opacity:.75">pp. ${row["Pages"]}</div>
+        <div style="font-size:11px;color:${c.text};margin-top:2px;opacity:.7">→ ${row["Taught in / Mapped to"]||"—"}</div>
+      </div>
+      <span class="st" style="background:${c.border};color:${c.text}">${st}</span>
+    </div>`));
+  });
+  content.appendChild(grid);
+}
+
+function renderSessions(content, sessions){
+  const byUnit = {};
+  sessions.forEach(s => { const k = s["Unit Title"]||("Unit "+s["Unit #"]); (byUnit[k]=byUnit[k]||[]).push(s); });
+  Object.entries(byUnit).forEach(([unitTitle, rows]) => {
+    content.appendChild(el(`<div style="font-weight:700;font-size:14px;color:#1B5E34;margin:16px 0 8px">${unitTitle}</div>`));
+    rows.forEach(s => {
+      content.appendChild(el(`<div class="session-row">
+        <span class="wk">Wk ${s["Week #"]}</span><span class="topic">${s["Session Topic"]||"(no topic yet)"}</span>
+        ${s["Date"]?` · <span style="color:#9CA3AF">${s["Date"]}</span>`:""}
+        <div class="notes">${s["Lecture Notes"]||"<i style='color:#9CA3AF'>No notes logged yet.</i>"}</div>
+        ${s["Homework / Next Steps"]?`<div class="notes" style="color:#7C3AED"><b>Homework:</b> ${s["Homework / Next Steps"]}</div>`:""}
+      </div>`));
+    });
+  });
+}
+
+function renderParent(content, tracker){
+  content.appendChild(el(`<div class="box" style="background:#F0FDF4;border-color:#BBF7D0;margin-bottom:16px">
+    Progress overview for families. Percentages reflect vocabulary, grammar, writing, speaking, listening and testing combined.
+  </div>`));
+  tracker.forEach(u => {
+    const statuses = SKILLS.map(s => u[s] || "Not begun");
+    const doneCount = statuses.filter(s=>s==="Completed").length;
+    const pct = Math.round((doneCount/SKILLS.length)*100);
+    const overall = pct===100 ? "Completed" : pct===0 ? "Not begun" : "In progress";
+    const c = STATUS_COLORS[overall];
+    content.appendChild(el(`<div class="parent-card" style="background:${c.bg};border-color:${c.border}">
+      <div class="parent-top">
+        <div><b>Unit ${u["Unit #"]}:</b> ${u["Title"]} <span style="color:#9CA3AF;font-size:12px">(Wks ${u["Weeks"]})</span></div>
+        <span class="pill" style="background:${c.border};color:${c.text}">${pct}% · ${overall}</span>
+      </div>
+      ${u["Milestone"] ? `<div class="parent-note" style="color:#B45309"><b>🏁 ${u["Milestone"]}</b></div>` : ""}
+    </div>`));
+  });
+}
+
+(async function init(){
+  const app = document.getElementById("app");
+  if (!STUDENT){
+    app.innerHTML = `<div style="padding:60px;text-align:center;color:#9CA3AF">
+      Unknown student "<b>${studentKey}</b>". Check the <code>?student=</code> URL param,
+      or add an entry for it in the STUDENTS config at the top of this file.
+    </div>`;
+    return;
+  }
+  document.title = STUDENT.title || "Curriculum Dashboard";
+  app.innerHTML = `<div style="padding:60px;text-align:center;color:#9CA3AF">Loading curriculum…</div>`;
+  DATA = await loadData();
+  render();
+})();
+</script>
+</body>
+</html>
