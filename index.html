@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Tra— Curriculum Dashboard</title>
+<title>Curriculum Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
   :root{
@@ -36,7 +36,7 @@
   .badge-num.done{background:#D1FAE5;color:#065F46;}
   .card-title{font-weight:700;font-size:15px;}
   .card-meta{font-size:12px;color:#6B7280;margin-top:2px;}
-  .oegc-tag{color:#7C3AED;font-weight:600;}
+  .grammar-tag{color:#7C3AED;font-weight:600;}
   .card-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
   .mini-track{width:56px;height:5px;background:#E5E7EB;border-radius:4px;overflow:hidden;}
   .mini-fill{height:100%;background:#3B82F6;border-radius:4px;}
@@ -49,8 +49,8 @@
   .box{margin-top:14px;border-radius:10px;padding:12px 14px;border:1px solid;}
   .box-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;}
   .badge-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
-  .oegc-badge{display:inline-flex;align-items:center;gap:6px;border:1.5px solid;border-radius:8px;padding:4px 8px;font-size:11px;}
-  .oegc-badge b{font-weight:800;}
+  .grammar-badge{display:inline-flex;align-items:center;gap:6px;border:1.5px solid;border-radius:8px;padding:4px 8px;font-size:11px;}
+  .grammar-badge b{font-weight:800;}
   .tag{font-size:11px;background:#F3F4F6;color:#6B7280;border:1px solid var(--border);border-radius:6px;padding:2px 8px;}
   .note{font-size:12px;color:#6B7280;font-style:italic;}
   .skill-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
@@ -64,11 +64,11 @@
   .session-row .wk{font-weight:700;color:var(--green);margin-right:8px;}
   .session-row .topic{font-weight:600;}
   .session-row .notes{color:#4B5563;margin-top:4px;white-space:pre-wrap;}
-  .oegc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  @media(max-width:640px){.oegc-grid{grid-template-columns:1fr;}}
-  .oegc-cell{border:1.5px solid;border-radius:10px;padding:10px 14px;display:flex;gap:10px;align-items:flex-start;}
-  .oegc-cell .num{font-weight:800;font-size:16px;min-width:28px;}
-  .oegc-cell .st{font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px;white-space:nowrap;}
+  .grammar-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  @media(max-width:640px){.grammar-grid{grid-template-columns:1fr;}}
+  .grammar-cell{border:1.5px solid;border-radius:10px;padding:10px 14px;display:flex;gap:10px;align-items:flex-start;}
+  .grammar-cell .num{font-weight:800;font-size:16px;min-width:28px;}
+  .grammar-cell .st{font-size:11px;font-weight:700;border-radius:10px;padding:1px 7px;white-space:nowrap;}
   .parent-card{border-radius:10px;padding:12px 14px;border:1.5px solid;margin-bottom:10px;}
   .parent-top{display:flex;justify-content:space-between;align-items:center;}
   .parent-note{font-size:12.5px;color:#374151;margin-top:6px;}
@@ -79,22 +79,179 @@
 <div id="app"></div>
 
 <script>
-// ─── CONFIGURE ME ────────────────────────────────────────────────────────
-// Paste your Google Sheet ID here (from the URL between /d/ and /edit),
-// after publishing it to the web (see the "Publish Setup" tab in the workbook).
-const CONFIG = {
-  SHEET_ID: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk", // e.g. "1AbCDefGHijkLMNoPQRstuVWxyz1234567890"
+// ─── STUDENTS ────────────────────────────────────────────────────────────
+// One entry per student. Open this page with ?student=<key> to load that
+// student's sheet and subject layout, e.g. index.html?student=tram
+// With no ?student= param, DEFAULT_STUDENT is used (keeps old bookmarks working).
+//
+// "subjectTrack" is an optional extra tab + per-unit box for subjects that
+// track a separate grammar/skill syllabus alongside the unit tracker (the
+// old "grammar" section). Subjects that don't have one just set enabled:false
+// (or omit subjectTrack entirely) and that tab/box/tag won't be shown.
+const DEFAULT_STUDENT = "tra_eng";
+
+const STUDENTS = {
+  tra_eng: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk",
+    eyebrow: "English Tutoring Plan · Grade 9",
+    title: "Global English 9 — Full Year Curriculum",
+    subtitle: "Vocabulary from GE9 · Grammar from Oxford English Grammar Course · Phrasal Verbs from EPVIU",
+    skills: ["Vocabulary","Grammar (grammar)","Writing","Speaking","Listening","Chapter Test"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Track",
+      sheetTab: "Grammar Track",
+      tagLabel: "Grammar",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "📘 Grammar — this unit",
+    },
+  },
+  tra_math: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk",
+    eyebrow: "Math Tutoring Plan · Grade 9",
+    title: "Math - Vin",
+    subtitle: "Math Vietnam",
+    skills: ["Algebra","Geometry"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Topics Track",
+      sheetTab: "Math Track",
+      tagLabel: "Topics",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "📐 Key Topics — this unit",
+    },
+  },
+  tra_science: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk",
+    eyebrow: "Science Tutoring Plan · Grade 9",
+    title: "Global Science 9 — Full Year Curriculum",
+    subtitle: "Science - Vin",
+    skills: ["Theory","Exercises"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Topics Track",
+      sheetTab: "Science Track",
+      tagLabel: "Topics",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "🔬 Key Topics — this unit",
+    },
+  },
+  my_eng: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk",
+    eyebrow: "English Tutoring Plan · Grade 9",
+    title: "Global English 9 — Full Year Curriculum",
+    subtitle: "Vocabulary from GE9 · Grammar from Oxford English Grammar Course · Phrasal Verbs from EPVIU",
+    skills: ["Vocabulary","Grammar (grammar)","Writing","Speaking","Listening","Chapter Test"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Track",
+      sheetTab: "Grammar Track",
+      tagLabel: "Grammar",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "📘 Grammar — this unit",
+    },
+  },
+  my_math: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk", // TODO: replace with My's own Math sheet
+    eyebrow: "Math Tutoring Plan · Grade 9",
+    title: "Math — Full Year Curriculum",
+    subtitle: "Algebra and Geometry practice",
+    skills: ["Algebra","Geometry"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Topics Track",
+      sheetTab: "Math Track",
+      tagLabel: "Topics",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "📐 Key Topics — this unit",
+    },
+  },
+  my_science: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk", // TODO: replace with My's own Science sheet
+    eyebrow: "Science Tutoring Plan · Grade 9",
+    title: "Science — Full Year Curriculum",
+    subtitle: "Theory and exercises",
+    skills: ["Theory","Exercises"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Topics Track",
+      sheetTab: "Science Track",
+      tagLabel: "Topics",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "🔬 Key Topics — this unit",
+    },
+  },
+  bach: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk", // TODO: replace with Bach's own Math sheet
+    eyebrow: "Math Tutoring Plan · Grade 9",
+    title: "Math — Full Year Curriculum",
+    subtitle: "Algebra and Geometry practice",
+    skills: ["Algebra","Geometry"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Topics Track",
+      sheetTab: "Math Track",
+      tagLabel: "Topics",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "📐 Key Topics — this unit",
+    },
+  },
+  giang: {
+    sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk", // TODO: replace with Giang's own Math sheet
+    eyebrow: "Math Tutoring Plan · Grade 9",
+    title: "Math — Full Year Curriculum",
+    subtitle: "Algebra and Geometry practice",
+    skills: ["Algebra","Geometry"],
+    subjectTrack: {
+      enabled: true,
+      tabLabel: "Topics Track",
+      sheetTab: "Math Track",
+      tagLabel: "Topics",
+      unitColumn: "Sections",          // column in the "Unit Tracker" tab
+      detailField: "Sections & Notes", // column in the "Unit Details" tab
+      boxTitle: "📐 Key Topics — this unit",
+    },
+  },
+
+
+
+  // Example for a student on a subject with no separate grammar track —
+  // copy this block, fill in the sheet ID, and add ?student=<key> to the URL.
+  // example: {
+  //   sheetId: "",
+  //   eyebrow: "Math Tutoring Plan",
+  //   title: "Algebra II — Full Year Curriculum",
+  //   subtitle: "Practice sets and problem-solving skills",
+  //   skills: ["Concepts","Practice Problems","Homework","Quiz"],
+  //   subjectTrack: { enabled: false },
+  // },
 };
+
+const params = new URLSearchParams(location.search);
+const studentKey = params.get("student") || DEFAULT_STUDENT;
+const STUDENT = STUDENTS[studentKey];
+
 // ──────────────────────────────────────────────────────────────────────
 
-const SKILLS = ["Vocabulary","Grammar (OEGC)","Writing","Speaking","Listening","Chapter Test"];
+const SKILLS = STUDENT ? STUDENT.skills : [];
+const SUBJECT_TRACK = (STUDENT && STUDENT.subjectTrack) || { enabled: false };
+const CONFIG = {
+  SHEET_ID: params.get("sheet") || (STUDENT ? STUDENT.sheetId : ""),
+};
 const STATUS_COLORS = {
   "Not begun":     {bg:"#F3F4F6",text:"#6B7280",dot:"#9CA3AF",border:"#E5E7EB"},
   "In progress":   {bg:"#DBEAFE",text:"#1D4ED8",dot:"#3B82F6",border:"#93C5FD"},
   "Review needed": {bg:"#FEF3C7",text:"#92400E",dot:"#F59E0B",border:"#FCD34D"},
   "Completed":     {bg:"#D1FAE5",text:"#065F46",dot:"#10B981",border:"#6EE7B7"},
 };
-const OEGC_COLORS = {
+const GRAMMAR_COLORS = {
   "Done":     {bg:"#D1FAE5",text:"#065F46",border:"#6EE7B7"},
   "Review":   {bg:"#FEF3C7",text:"#92400E",border:"#FCD34D"},
   "Next":     {bg:"#DBEAFE",text:"#1D4ED8",border:"#93C5FD"},
@@ -104,16 +261,16 @@ const OEGC_COLORS = {
 // ─── Sample data (used only if CONFIG.SHEET_ID is empty or fetch fails) ──
 const SAMPLE = {
   tracker: [
-    {"Unit #":1,"Title":"Views and Voices","Pages":"11-32","Semester":1,"Weeks":"1-4","Vocabulary":"Completed","Grammar (OEGC)":"Completed","Writing":"Completed","Speaking":"Completed","Listening":"Completed","Chapter Test":"Completed","% Complete":1,"OEGC Sections":"S1, S2, S3","Milestone":"","Notes":""},
-    {"Unit #":2,"Title":"Well-being","Pages":"33-54","Semester":1,"Weeks":"5-8","Vocabulary":"In progress","Grammar (OEGC)":"Review needed","Writing":"In progress","Speaking":"Not begun","Listening":"Not begun","Chapter Test":"Not begun","% Complete":0,"OEGC Sections":"S5, S11, S6","Milestone":"","Notes":"Sample data — connect your Google Sheet."},
-    {"Unit #":3,"Title":"Tourism","Pages":"55-76","Semester":1,"Weeks":"9-12","Vocabulary":"Not begun","Grammar (OEGC)":"Not begun","Writing":"Not begun","Speaking":"Not begun","Listening":"Not begun","Chapter Test":"Not begun","% Complete":0,"OEGC Sections":"S7, S16","Milestone":"","Notes":""},
+    {"Unit #":1,"Title":"Views and Voices","Pages":"11-32","Semester":1,"Weeks":"1-4","Vocabulary":"Completed","Grammar (grammar)":"Completed","Writing":"Completed","Speaking":"Completed","Listening":"Completed","Chapter Test":"Completed","% Complete":1,"Sections":"S1, S2, S3","Milestone":"","Notes":""},
+    {"Unit #":2,"Title":"Well-being","Pages":"33-54","Semester":1,"Weeks":"5-8","Vocabulary":"In progress","Grammar (grammar)":"Review needed","Writing":"In progress","Speaking":"Not begun","Listening":"Not begun","Chapter Test":"Not begun","% Complete":0,"Sections":"S5, S11, S6","Milestone":"","Notes":"Sample data — connect your Google Sheet."},
+    {"Unit #":3,"Title":"Tourism","Pages":"55-76","Semester":1,"Weeks":"9-12","Vocabulary":"Not begun","Grammar (grammar)":"Not begun","Writing":"Not begun","Speaking":"Not begun","Listening":"Not begun","Chapter Test":"Not begun","% Complete":0,"Sections":"S7, S16","Milestone":"","Notes":""},
   ],
   details: [
-    {"Unit #":1,"Title":"Views and Voices","OEGC Sections & Notes":"S1, S2, S3 - Sections 1-3 completed.","GE9 Grammar (textbook, reference only)":"-ing forms; Present simple & continuous","GE9 Grammar Note":"Covered via OEGC S1-S2.","Vocabulary Themes":"Classroom interaction; Character and behaviour","Core Vocabulary":"responsible, stereotype, prejudice, confident, mature, peer, behaviour, attitude","Word Families":"stereotype -> stereotypical / stereotyping","Phrasal Verbs (EPVIU)":"speak up, put across, bring up, point out, go on about","Writing Tasks":"An email to a friend. An interpretation of a photo.","Speaking Tasks":"Give your views on talking in class.","Listening Tasks":"Talking in class. What it's like to be a teenager.","Use of English (GE9)":"-ing forms; Present simple and continuous"},
-    {"Unit #":2,"Title":"Well-being","OEGC Sections & Notes":"S5, S11, S6 - active review + starting modal verbs","GE9 Grammar (textbook, reference only)":"Abstract nouns; Must have/might have + past participle","GE9 Grammar Note":"Sample note.","Vocabulary Themes":"Food and health; Feelings and emotions","Core Vocabulary":"balanced diet, nutritious, well-being, anxiety, overwhelm, exhausted","Word Families":"nourish -> nourishment / nutritious","Phrasal Verbs (EPVIU)":"cut down on, give up, work out","Writing Tasks":"Interpret a photo and speculate.","Speaking Tasks":"Discuss opinions about food and health.","Listening Tasks":"Why is a balanced diet important?","Use of English (GE9)":"Abstract nouns; Comparative adjectives & adverbs"},
-    {"Unit #":3,"Title":"Tourism","OEGC Sections & Notes":"S7, S16","GE9 Grammar (textbook, reference only)":"Compound nouns; Past continuous passive","GE9 Grammar Note":"Sample note.","Vocabulary Themes":"Holidays; Responsible tourism","Core Vocabulary":"itinerary, sustainable, ecotourism, accommodation","Word Families":"accommodate -> accommodation","Phrasal Verbs (EPVIU)":"check in, check out, set off","Writing Tasks":"Write a travel blog.","Speaking Tasks":"Talk about holidays.","Listening Tasks":"Going on holiday.","Use of English (GE9)":"Compound nouns; Multi-word verbs"},
+    {"Unit #":1,"Title":"Views and Voices","Sections & Notes":"S1, S2, S3 - Sections 1-3 completed.","School Progress":"-ing forms; Present simple & continuous","School Progress Note":"Covered via S1-S2.","Vocabulary Themes":"Classroom interaction; Character and behaviour","Core Vocabulary":"responsible, stereotype, prejudice, confident, mature, peer, behaviour, attitude","Word Families":"stereotype -> stereotypical / stereotyping","Phrasal Verbs (EPVIU)":"speak up, put across, bring up, point out, go on about","Writing Tasks":"An email to a friend. An interpretation of a photo.","Speaking Tasks":"Give your views on talking in class.","Listening Tasks":"Talking in class. What it's like to be a teenager.","Use of English (GE9)":"-ing forms; Present simple and continuous"},
+    {"Unit #":2,"Title":"Well-being","Sections & Notes":"S5, S11, S6 - active review + starting modal verbs","School Progress":"Abstract nouns; Must have/might have + past participle","School Progress Note":"Sample note.","Vocabulary Themes":"Food and health; Feelings and emotions","Core Vocabulary":"balanced diet, nutritious, well-being, anxiety, overwhelm, exhausted","Word Families":"nourish -> nourishment / nutritious","Phrasal Verbs (EPVIU)":"cut down on, give up, work out","Writing Tasks":"Interpret a photo and speculate.","Speaking Tasks":"Discuss opinions about food and health.","Listening Tasks":"Why is a balanced diet important?","Use of English (GE9)":"Abstract nouns; Comparative adjectives & adverbs"},
+    {"Unit #":3,"Title":"Tourism","Sections & Notes":"S7, S16","School Progress":"Compound nouns; Past continuous passive","School Progress Note":"Sample note.","Vocabulary Themes":"Holidays; Responsible tourism","Core Vocabulary":"itinerary, sustainable, ecotourism, accommodation","Word Families":"accommodate -> accommodation","Phrasal Verbs (EPVIU)":"check in, check out, set off","Writing Tasks":"Write a travel blog.","Speaking Tasks":"Talk about holidays.","Listening Tasks":"Going on holiday.","Use of English (GE9)":"Compound nouns; Multi-word verbs"},
   ],
-  oegc: [
+  grammar: [
     {"Section":"S1","Grammar Point":"be and have","Pages":"1-12","Status":"Done","Taught in / Mapped to":"U1"},
     {"Section":"S5","Grammar Point":"Perfect tenses","Pages":"47-70","Status":"Review","Taught in / Mapped to":"U2"},
     {"Section":"S6","Grammar Point":"Modal verbs","Pages":"71-92","Status":"Next","Taught in / Mapped to":"U2"},
@@ -141,13 +298,13 @@ async function fetchSheetTab(name){
 async function loadData(){
   if (!CONFIG.SHEET_ID) return {...SAMPLE, isSample:true};
   try {
-    const [tracker, details, oegc, sessions] = await Promise.all([
+    const [tracker, details, grammar, sessions] = await Promise.all([
       fetchSheetTab("Unit Tracker"),
       fetchSheetTab("Unit Details"),
-      fetchSheetTab("OEGC Grammar Track"),
+      SUBJECT_TRACK.enabled ? fetchSheetTab(SUBJECT_TRACK.sheetTab) : Promise.resolve([]),
       fetchSheetTab("Session Notes"),
     ]);
-    return {tracker, details, oegc, sessions, isSample:false};
+    return {tracker, details, grammar, sessions, isSample:false};
   } catch(e){
     console.error("Failed to load Google Sheet, showing sample data.", e);
     return {...SAMPLE, isSample:true};
@@ -162,9 +319,9 @@ function statusPill(status){
     <span class="dot" style="background:${c.dot}"></span>${status || "Not begun"}</span>`;
 }
 
-function oegcBadge(code, title, status){
-  const c = OEGC_COLORS[status] || OEGC_COLORS["Upcoming"];
-  return `<span class="oegc-badge" style="background:${c.bg};color:${c.text};border-color:${c.border}">
+function grammarBadge(code, title, status){
+  const c = GRAMMAR_COLORS[status] || GRAMMAR_COLORS["Upcoming"];
+  return `<span class="grammar-badge" style="background:${c.bg};color:${c.text};border-color:${c.border}">
     <b>${code}</b> ${title}</span>`;
 }
 
@@ -173,7 +330,7 @@ let openCards = {};
 
 function render(){
   const app = document.getElementById("app");
-  const tracker = DATA.tracker, details = DATA.details, oegc = DATA.oegc, sessions = DATA.sessions;
+  const tracker = DATA.tracker, details = DATA.details, grammar = DATA.grammar, sessions = DATA.sessions;
 
   const totalItems = tracker.length * SKILLS.length;
   let doneCount = 0;
@@ -182,9 +339,9 @@ function render(){
 
   app.innerHTML = `
     <div class="header"><div class="header-inner">
-      <div class="eyebrow">English Tutoring Plan · Grade 9</div>
-      <div class="h1">Global English 9 — Full Year Curriculum</div>
-      <div class="sub">Vocabulary from GE9 · Grammar from Oxford English Grammar Course · Phrasal Verbs from EPVIU</div>
+      <div class="eyebrow">${STUDENT.eyebrow}</div>
+      <div class="h1">${STUDENT.title}</div>
+      <div class="sub">${STUDENT.subtitle}</div>
       <div class="progress-row">
         <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
         <span style="font-size:13px;font-weight:700;min-width:38px">${pct}%</span>
@@ -192,12 +349,15 @@ function render(){
     </div></div>
     <div class="tabs"><div class="tabs-inner" id="tabs"></div></div>
     <div class="content" id="content"></div>
-    <div class="footer-note">${DATA.isSample ? "Showing sample data — set CONFIG.SHEET_ID at the top of this file to connect your live Google Sheet." : "Live data from Google Sheets."}</div>
+    <div class="footer-note">${DATA.isSample ? "Showing sample data — set a sheetId for this student in the STUDENTS config (or pass ?sheet=) to connect a live Google Sheet." : "Live data from Google Sheets."}</div>
   `;
 
-  const tabsDef = [["units","Unit Plans"],["oegc","OEGC Track"],["sessions","Session Notes"],["parent","Parent View"]];
+  const tabsDef = [["units","Unit Plans"]];
+  if (SUBJECT_TRACK.enabled) tabsDef.push(["grammar", SUBJECT_TRACK.tabLabel]);
+  tabsDef.push(["sessions","Session Notes"], ["parent","Parent View"]);
   const tabsEl = document.getElementById("tabs");
   let activeTab = window.__activeTab || "units";
+  if (!tabsDef.some(([key]) => key === activeTab)) activeTab = "units";
   tabsDef.forEach(([key,label]) => {
     const b = el(`<button class="tab-btn ${key===activeTab?"active":""}">${label}</button>`);
     b.onclick = () => { window.__activeTab = key; render(); };
@@ -205,10 +365,10 @@ function render(){
   });
 
   const content = document.getElementById("content");
-  if (DATA.isSample) content.appendChild(el(`<div class="banner">Sample preview data shown below. Connect CONFIG.SHEET_ID to your published Google Sheet to see real progress.</div>`));
+  if (DATA.isSample) content.appendChild(el(`<div class="banner">Sample preview data shown below. Set this student's sheetId in the STUDENTS config to see real progress.</div>`));
 
   if (activeTab === "units") renderUnits(content, tracker, details, sessions);
-  else if (activeTab === "oegc") renderOegc(content, oegc);
+  else if (activeTab === "grammar") renderGrammar(content, grammar);
   else if (activeTab === "sessions") renderSessions(content, sessions);
   else if (activeTab === "parent") renderParent(content, tracker);
 }
@@ -238,7 +398,7 @@ function renderUnits(content, tracker, details, sessions){
       <span class="badge-num ${allDone?"done":""}">${allDone?"✓":uid}</span>
       <div style="flex:1;min-width:0">
         <div class="card-title">Unit ${uid}: ${u["Title"]}</div>
-        <div class="card-meta">pp. ${u["Pages"]} · Sem ${u["Semester"]} · Wks ${u["Weeks"]} · <span class="oegc-tag">OEGC ${u["OEGC Sections"]}</span></div>
+        <div class="card-meta">pp. ${u["Pages"]} · Sem ${u["Semester"]} · Wks ${u["Weeks"]}${SUBJECT_TRACK.enabled ? ` · <span class="grammar-tag">${SUBJECT_TRACK.tagLabel} ${u[SUBJECT_TRACK.unitColumn]||""}</span>` : ""}</div>
       </div>
       <div class="card-right">
         <div class="mini-track"><div class="mini-fill ${allDone?"done":""}" style="width:${allDone?100:pct}%"></div></div>
@@ -252,14 +412,16 @@ function renderUnits(content, tracker, details, sessions){
 
     if (isOpen){
       const body = el(`<div class="card-body"></div>`);
-      body.appendChild(el(`<div class="box" style="background:#F5F3FF;border-color:#DDD6FE;margin-top:16px">
-        <div class="box-title" style="color:#7C3AED">📘 OEGC Grammar — this unit</div>
-        <div class="note">${d["OEGC Sections & Notes"]||""}</div>
-      </div>`));
+      if (SUBJECT_TRACK.enabled){
+        body.appendChild(el(`<div class="box" style="background:#F5F3FF;border-color:#DDD6FE;margin-top:16px">
+          <div class="box-title" style="color:#7C3AED">${SUBJECT_TRACK.boxTitle}</div>
+          <div class="note">${d[SUBJECT_TRACK.detailField]||""}</div>
+        </div>`));
+      }
       body.appendChild(el(`<div class="box" style="background:#F9FAFB;border-color:#E5E7EB">
-        <div class="box-title" style="color:#9CA3AF">📖 GE9 Grammar (textbook reference)</div>
-        <div class="badge-row">${(d["GE9 Grammar (textbook, reference only)"]||"").split(";").map(g=>g.trim()).filter(Boolean).map(g=>`<span class="tag">${g}</span>`).join("")}</div>
-        <div class="note">${d["GE9 Grammar Note"]||""}</div>
+        <div class="box-title" style="color:#9CA3AF">🏫 School Progress <span style="font-weight:400;text-transform:none;font-size:11px">(compare with what's covered in school)</span></div>
+        <div class="badge-row">${(d["School Progress"]||"").split(";").map(g=>g.trim()).filter(Boolean).map(g=>`<span class="tag">${g}</span>`).join("")}</div>
+        <div class="note">${d["School Progress Note"]||""}</div>
       </div>`));
 
       const skillGrid = el(`<div class="skill-grid"></div>`);
@@ -297,15 +459,15 @@ function renderUnits(content, tracker, details, sessions){
   });
 }
 
-function renderOegc(content, oegc){
+function renderGrammar(content, grammar){
   content.appendChild(el(`<div class="box" style="background:#F5F3FF;border-color:#DDD6FE;margin-bottom:16px">
-    <b>Grammar track status</b> — updated live from the OEGC Grammar Track tab.
+    <b>${SUBJECT_TRACK.tagLabel} track status</b> — updated live from the ${SUBJECT_TRACK.sheetTab} tab.
   </div>`));
-  const grid = el(`<div class="oegc-grid"></div>`);
-  oegc.forEach(row => {
+  const grid = el(`<div class="grammar-grid"></div>`);
+  grammar.forEach(row => {
     const st = row["Status"] || "Upcoming";
-    const c = OEGC_COLORS[st] || OEGC_COLORS["Upcoming"];
-    grid.appendChild(el(`<div class="oegc-cell" style="background:${c.bg};border-color:${c.border}">
+    const c = GRAMMAR_COLORS[st] || GRAMMAR_COLORS["Upcoming"];
+    grid.appendChild(el(`<div class="grammar-cell" style="background:${c.bg};border-color:${c.border}">
       <span class="num" style="color:${c.text}">${row["Section"]}</span>
       <div style="flex:1">
         <div style="font-weight:700;font-size:13px;color:${c.text}">${row["Grammar Point"]}</div>
@@ -355,7 +517,16 @@ function renderParent(content, tracker){
 }
 
 (async function init(){
-  document.getElementById("app").innerHTML = `<div style="padding:60px;text-align:center;color:#9CA3AF">Loading curriculum…</div>`;
+  const app = document.getElementById("app");
+  if (!STUDENT){
+    app.innerHTML = `<div style="padding:60px;text-align:center;color:#9CA3AF">
+      Unknown student "<b>${studentKey}</b>". Check the <code>?student=</code> URL param,
+      or add an entry for it in the STUDENTS config at the top of this file.
+    </div>`;
+    return;
+  }
+  document.title = STUDENT.title || "Curriculum Dashboard";
+  app.innerHTML = `<div style="padding:60px;text-align:center;color:#9CA3AF">Loading curriculum…</div>`;
   DATA = await loadData();
   render();
 })();
