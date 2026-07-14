@@ -1,0 +1,181 @@
+<h2>Vocabulary & Grammar Test (15 Minutes)</h2>
+
+<h3>Part A – Vocabulary</h3>
+
+<p><strong>Use one word from the box.</strong></p>
+
+<div class="box">
+consume • consumption • obesity • vegetarian • bacteria • infection • recovery • susceptible • immune system
+</div>
+
+<div class="question">
+1. Eating too much sugar may contribute to <span class="answer-line"></span>.
+</div>
+
+<div class="question">
+2. A healthy <span class="answer-line"></span> helps protect the body from illness.
+</div>
+
+<div class="question">
+3. Harmful <span class="answer-line"></span> can sometimes cause disease.
+</div>
+
+<div class="question">
+4. People who do not eat meat are called <span class="answer-line"></span>.
+</div>
+
+<div class="question">
+5. Young children are often more <span class="answer-line"></span> to certain illnesses.
+</div>
+
+<div class="question">
+6. The doctor said the patient was making a good <span class="answer-line"></span>.
+</div>
+
+<div class="question">
+7. We should not <span class="answer-line"></span> too much junk food.
+</div>
+
+<div class="question">
+8. Excessive <span class="answer-line"></span> of sugary drinks can lead to health problems.
+</div>
+
+
+<h3>Part B – Vocabulary Multiple Choice</h3>
+
+<div class="question">
+9. Someone who can be trusted to make good decisions is:<br>
+A. rebellious<br>
+B. responsible<br>
+C. cheeky
+</div>
+
+<br>
+
+<div class="question">
+10. The ability to adapt to different social situations is called:<br>
+A. self-analysis<br>
+B. social flexibility<br>
+C. ambition
+</div>
+
+<br>
+
+<div class="question">
+11. Finding solutions to difficult situations requires:<br>
+A. creativity<br>
+B. problem-solving<br>
+C. rage
+</div>
+
+<br>
+
+<div class="question">
+12. Someone who speaks impolitely to others is:<br>
+A. gracious<br>
+B. sensible<br>
+C. rude
+</div>
+
+
+<h3>Part C – Grammar: Open Cloze (FCE Style)</h3>
+
+<p><strong>Complete the text with the correct form of the verb in brackets.</strong></p>
+
+<div class="question">
+For many years, scientists <span class="answer-line"></span> (study) the effects of diet on health.
+Recently, they <span class="answer-line"></span> (discover) that people who eat large amounts of junk food are more likely to suffer from obesity.
+Researchers also found that some people <span class="answer-line"></span> (be) more susceptible to disease because of lifestyle factors.
+</div>
+
+<div class="question">
+13. <span class="answer-line"></span>
+</div>
+
+<div class="question">
+14. <span class="answer-line"></span>
+</div>
+
+<div class="question">
+15. <span class="answer-line"></span>
+</div>
+
+
+<h3>Part D – Grammar: Multiple Choice Cloze (FCE Style)</h3>
+
+<p><strong>Choose the best answer.</strong></p>
+
+<div class="question">
+16. I can't talk right now because I ______ an online lesson.<br>
+A. teach<br>
+B. am teaching<br>
+C. have taught
+</div>
+
+<br>
+
+<div class="question">
+17. Scientists believe that people ______ longer in the future.<br>
+A. live<br>
+B. are living<br>
+C. will live
+</div>
+
+<br>
+
+<div class="question">
+18. While the doctor was examining the patient, a nurse ______ into the room.<br>
+A. came<br>
+B. was coming<br>
+C. has come
+</div>
+
+
+<h3>Part E – Grammar: Tense Differentiation</h3>
+
+<p><strong>Choose the correct answer.</strong></p>
+
+<div class="question">
+19. My brother ______ a vegetarian diet three months ago and he still follows it today.<br>
+A. has started<br>
+B. started<br>
+C. was starting
+</div>
+
+<br>
+
+<div class="question">
+20. We ______ this health project since January and we are almost finished.<br>
+A. worked on<br>
+B. have worked on<br>
+C. have been working on
+</div>
+
+<br>
+
+<div class="question">
+21. By the time I arrived at the clinic, the doctor ______ the first patient.<br>
+A. examined<br>
+B. was examining<br>
+C. had examined
+</div>
+
+
+<h3>Part F – Grammar: Error Correction (FCE Style)</h3>
+
+<p><strong>Find and correct the mistake.</strong></p>
+
+<div class="question">
+22. Scientists have discovered this bacteria in 2022.
+<span class="answer-line"></span>
+</div>
+
+<div class="question">
+23. While I studied last night, my brother was playing video games.
+<span class="answer-line"></span>
+</div>
+
+<div class="question">
+24. Look at those clouds! It will rain.
+<span class="answer-line"></span>
+</div>
