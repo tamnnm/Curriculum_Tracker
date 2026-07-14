@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit 3 Vocabulary Test — Architecture, Travel & Environment</title>
+<style>
+  :root{
+    --blue:#2b5fb8; --blue-dark:#1e4488; --green:#1f9d55; --red:#d64545;
+    --bg:#f4f6fb; --card:#ffffff; --border:#e0e4ee; --text:#222; --muted:#6b7280;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.55;
+  }
+  header{
+    background:linear-gradient(135deg,var(--blue),var(--blue-dark));
+    color:#fff; padding:32px 20px 26px; text-align:center;
+  }
+  header h1{margin:0 0 6px; font-size:1.6rem;}
+  header p{margin:2px 0; opacity:.9; font-size:.95rem;}
+  .wrap{max-width:820px; margin:0 auto; padding:20px 16px 80px;}
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:10px;
+    padding:20px 22px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.04);
+  }
+  .student-info label{display:block; font-weight:600; margin:10px 0 4px; font-size:.92rem;}
+  .student-info input{
+    width:100%; padding:9px 10px; border:1px solid var(--border); border-radius:6px; font-size:.95rem;
+  }
+  section.qsection{margin-bottom:26px;}
+  .section-title{
+    background:var(--blue); color:#fff; padding:10px 16px; border-radius:8px 8px 0 0;
+    font-size:1.05rem; font-weight:700;
+  }
+  .section-instructions{
+    background:#eef2fb; padding:10px 16px; font-size:.88rem; color:#334; border-bottom:1px solid var(--border);
+  }
+  .section-body{
+    background:var(--card); border:1px solid var(--border); border-top:none; border-radius:0 0 8px 8px; padding:6px 16px 12px;
+  }
+  .question{
+    padding:14px 0; border-bottom:1px dashed var(--border);
+  }
+  .question:last-child{border-bottom:none;}
+  .qtext{font-weight:600; margin:0 0 8px; font-size:.96rem;}
+  .options{display:flex; flex-direction:column; gap:6px;}
+  .options label{
+    display:flex; align-items:center; gap:8px; padding:6px 10px; border:1px solid var(--border);
+    border-radius:6px; cursor:pointer; font-size:.92rem; transition:background .15s;
+  }
+  .options label:hover{background:#f5f7ff;}
+  select, input[type="text"]{
+    width:100%; max-width:420px; padding:8px 10px; border:1px solid var(--border);
+    border-radius:6px; font-size:.92rem;
+  }
+  .feedback{
+    margin-top:8px; font-size:.85rem; font-weight:600; padding:6px 10px; border-radius:6px; display:none;
+  }
+  .question.correct{background:#f0faf3; border-radius:8px;}
+  .question.incorrect{background:#fdf1f1; border-radius:8px;}
+  .question.correct .feedback{display:block; color:var(--green); background:#e3f7e9;}
+  .question.incorrect .feedback{display:block; color:var(--red); background:#fbe6e6;}
+  .toolbar{
+    position:sticky; bottom:0; background:#fff; border-top:1px solid var(--border);
+    padding:14px 16px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+    box-shadow:0 -2px 8px rgba(0,0,0,.05);
+  }
+  button{
+    border:none; border-radius:8px; padding:12px 26px; font-size:1rem; font-weight:700;
+    cursor:pointer; transition:transform .1s;
+  }
+  button:active{transform:scale(.97);}
+  #checkBtn{background:var(--blue); color:#fff;}
+  #resetBtn{background:#e5e7eb; color:#333;}
+  #scoreBox{
+    display:none; position:sticky; top:0; z-index:5; background:#fff8e6; border:2px solid #f2c744;
+    border-radius:10px; padding:14px 18px; margin-bottom:18px; text-align:center; font-size:1.1rem; font-weight:700;
+  }
+  #scoreBox .sub{font-size:.85rem; font-weight:500; color:var(--muted); margin-top:4px;}
+  @media print{ .toolbar{display:none;} }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>UNIT 3 VOCABULARY TEST</h1>
+  <p>Architecture, Travel &amp; Environment</p>
+  <p>Recommended time: 35–45 minutes</p>
+</header>
+
+<div class="wrap">
+
+  <div class="card student-info">
+    <label for="studentName">Full Name</label>
+    <input type="text" id="studentName" placeholder="Enter your name">
+    <label for="studentClass">Class / Group</label>
+    <input type="text" id="studentClass" placeholder="Enter your class">
+  </div>
+
+  <div id="scoreBox"></div>
+
+  <div id="quizContainer"></div>
+
+  <div class="toolbar">
+    <button id="checkBtn">Check Answers</button>
+    <button id="resetBtn" type="button">Reset Quiz</button>
+  </div>
+
+</div>
+
+<script>
+const quizData = [
+
+  {
+    id: "v1",
+    title: "V1. Multiple Choice Meaning",
+    instructions: "Choose the correct meaning for each word.",
+    type: "mcq",
+    questions: [
+      { q: "1. Amphitheatre means:", options: ["a round or oval open-air venue used for performances or contests","a covered market","a religious painting","a narrow street"], answer: 0 },
+      { q: "2. Fresco means:", options: ["a type of stone arch","a painting done directly on wet plaster","a Roman soldier","a circular garden"], answer: 1 },
+      { q: "3. Gladiator means:", options: ["a medieval king","a type of vineyard worker","a person who fought for public entertainment in ancient Rome","a religious leader"], answer: 2 },
+      { q: "4. Renaissance means:", options: ["a period of ancient Roman history","a type of maze","a modern architectural style","a period of renewed interest in art and learning in Europe"], answer: 3 },
+      { q: "5. Vineyard means:", options: ["a place where insects are kept","a place where grapes are grown","a type of theme park","a public bathing area"], answer: 1 },
+      { q: "6. Balcony means:", options: ["a platform projecting from a building with access from an upper floor","an underground tunnel","a hot spring","a circular route"], answer: 0 },
+      { q: "7. Medieval means:", options: ["relating to ancient Egypt","relating to modern technology","relating to the Renaissance only","relating to the Middle Ages"], answer: 3 },
+      { q: "8. Conservation means:", options: ["the wasteful use of resources","a type of building style","the protection of the environment and wildlife","a form of transport"], answer: 2 },
+      { q: "9. Endangered species means:", options: ["animals at risk of extinction","animals that are extremely common","animals used for farming","animals found only in zoos"], answer: 0 },
+      { q: "10. Inconsistency means:", options: ["strong determination","a peaceful agreement","a lack of logical connection or agreement between things","a type of ancient artwork"], answer: 2 }
+    ]
+  },
+
+  {
+    id: "v2",
+    title: "V2. Multiple Choice Usage",
+    instructions: "Choose the word or phrase that best completes each sentence.",
+    type: "mcq",
+    questions: [
+      { q: "1. Before hiking in the jungle, make sure you pack ______ to avoid mosquito bites.", options: ["insect repellent","sunscreen","a maze","a compass"], answer: 0 },
+      { q: "2. The ancient Romans held gladiator fights in the ______.", options: ["vineyard","amphitheatre","balcony","theme park"], answer: 1 },
+      { q: "3. We got lost trying to find our way out of the ______.", options: ["fresco","arch","maze","conservation area"], answer: 2 },
+      { q: "4. The hotel room had a small ______ overlooking the sea.", options: ["vineyard","hot spring","gladiator","balcony"], answer: 3 },
+      { q: "5. Visitors are asked not to ______ in the national park to protect wildlife.", options: ["windsurf","litter","conserve","hike"], answer: 1 },
+      { q: "6. Local authorities are working to protect the region's ______, including several rare bird species.", options: ["accommodation","inconsistency","endangered species","renaissance art"], answer: 2 },
+      { q: "7. The tour guide pointed out the beautiful ______ painted on the church ceiling centuries ago.", options: ["fresco","arch","balcony","gladiator"], answer: 0 },
+      { q: "8. After a long day of sightseeing, we ______ at a small local restaurant.", options: ["turned back","broke down","called off","ate out"], answer: 3 },
+      { q: "9. Due to bad weather, the boat trip was ______ at the last minute.", options: ["turned up","called off","sorted out","brought up"], answer: 1 },
+      { q: "10. The car ______ halfway through our road trip, so we had to wait for a mechanic.", options: ["turned out","got away with","broke down","caught up with"], answer: 2 }
+    ]
+  },
+
+  {
+    id: "v3",
+    title: "V3. Gap Fill with Word Bank",
+    instructions: "Word Bank: hot spring, insect repellent, theme park, windsurfing, medieval, amphitheatre, renaissance, fresco, gladiator, balcony, vineyard, maze, conservation, litter, endangered species, excursion, itinerary, souvenir, landmark. (Not every word in the bank is used.)",
+    type: "dropdown",
+    dropdownOptions: ["hot spring","insect repellent","theme park","windsurfing","medieval","amphitheatre","renaissance","fresco","gladiator","balcony","vineyard","maze","conservation","litter","endangered species","excursion","itinerary","souvenir","landmark"],
+    questions: [
+      { q: "1. We relaxed in a natural __________ after our long hike in the mountains.", answer: "hot spring" },
+      { q: "2. Don't forget to bring __________ if we're camping near the swamp.", answer: "insect repellent" },
+      { q: "3. The kids spent the whole day riding roller coasters at the __________.", answer: "theme park" },
+      { q: "4. She took a __________ lesson and fell into the sea twice on her first try.", answer: "windsurfing" },
+      { q: "5. The castle was built during the __________ period, over 800 years ago.", answer: "medieval" },
+      { q: "6. Thousands of spectators once watched fights in the ancient __________.", answer: "amphitheatre" },
+      { q: "7. The __________ was a period of great achievement in art, science, and literature in Europe.", answer: "renaissance" },
+      { q: "8. The __________ on the ceiling had faded after centuries of exposure to light.", answer: "fresco" },
+      { q: "9. In ancient Rome, a __________ often fought wild animals as well as other fighters.", answer: "gladiator" },
+      { q: "10. Their hotel room had a small __________ with a view of the old town.", answer: "balcony" },
+      { q: "11. The region is famous for its wine, thanks to its many __________.", answer: "vineyard" },
+      { q: "12. We got completely lost inside the garden's giant __________.", answer: "maze" },
+      { q: "13. Local groups are working on __________ projects to protect the forest.", answer: "conservation" },
+      { q: "14. Please don't __________ on the beach — it harms marine life.", answer: "litter" },
+      { q: "15. The panda is considered an __________ due to habitat loss.", answer: "endangered species" }
+    ]
+  },
+
+  {
+    id: "v5",
+    title: "V5. Matching Collocations",
+    instructions: "For each item (1–8), choose the word (A–H) that collocates with it.",
+    type: "dropdown",
+    dropdownOptions: [
+      {value:"A", label:"A. environmentally"},
+      {value:"B", label:"B. circular"},
+      {value:"C", label:"C. natural"},
+      {value:"D", label:"D. ancient"},
+      {value:"E", label:"E. wine"},
+      {value:"F", label:"F. tourist"},
+      {value:"G", label:"G. endangered"},
+      {value:"H", label:"H. historic"}
+    ],
+    questions: [
+      { q: "1. sensitive", answer: "A" },
+      { q: "2. route", answer: "B" },
+      { q: "3. attraction", answer: "F" },
+      { q: "4. species", answer: "G" },
+      { q: "5. ruins", answer: "D" },
+      { q: "6. production", answer: "E" },
+      { q: "7. habitat", answer: "C" },
+      { q: "8. site", answer: "H" }
+    ]
+  },
+
+  {
+    id: "v6",
+    title: "V6. Phrasal Verb Matching (Contextualised)",
+    instructions: "Match each sentence's highlighted phrasal verb with its meaning.",
+    type: "dropdown",
+    dropdownOptions: [
+      {value:"1", label:"1. Found something by chance"},
+      {value:"2", label:"2. Cancelled"},
+      {value:"3", label:"3. Resolved a problem"},
+      {value:"4", label:"4. Raised (as a child)"}
+    ],
+    questions: [
+      { q: "A. The meeting was called off because of the storm.", answer: "2" },
+      { q: "B. She came across an old photograph while cleaning the attic.", answer: "1" },
+      { q: "C. He was brought up by his grandparents after his parents passed away.", answer: "4" },
+      { q: "D. They finally sorted out their disagreement over dinner.", answer: "3" }
+    ]
+  },
+
+  {
+    id: "v7",
+    title: "V7. Multiple Meaning / Confusing Words",
+    instructions: "Choose the word that does NOT belong.",
+    type: "mcq",
+    questions: [
+      { q: "1.", options: ["ancient","medieval","modern","renaissance"], answer: 2 },
+      { q: "2.", options: ["common","endangered","rare","extinct"], answer: 0 },
+      { q: "3.", options: ["accommodation","hotel","lodging","litter"], answer: 3 },
+      { q: "4.", options: ["mistreated","protected","abused","neglected"], answer: 1 },
+      { q: "5.", options: ["call off","cancel","postpone","scrap"], answer: 2 },
+      { q: "6.", options: ["search for","come across","stumble upon","encounter"], answer: 0 },
+      { q: "7.", options: ["get away with","escape punishment","avoid consequences","get caught"], answer: 3 },
+      { q: "8.", options: ["put off","hurry","postpone","delay"], answer: 1 },
+      { q: "9.", options: ["sort out","resolve","create","fix"], answer: 2 },
+      { q: "10.", options: ["establish","do away with","eliminate","abolish"], answer: 0 }
+    ]
+  },
+
+  {
+    id: "v8",
+    title: "V8. Word Formation",
+    instructions: "Write the correct form of the word in CAPITALS.",
+    type: "text",
+    questions: [
+      { q: "1. The old town is full of __________ buildings dating back centuries. (HISTORY)", answer: ["historic"] },
+      { q: "2. The city is famous for its stunning __________. (ARCHITECT)", answer: ["architecture"] },
+      { q: "3. The organisation focuses on wildlife __________. (CONSERVE)", answer: ["conservation"] },
+      { q: "4. Several __________ species live in this forest. (ENDANGER)", answer: ["endangered"] },
+      { q: "5. The hotel was built using __________ friendly materials. (ENVIRONMENT)", answer: ["environmentally"] },
+      { q: "6. There was a clear __________ between what he said and what he did. (INCONSISTENT)", answer: ["inconsistency"] },
+      { q: "7. The charity works to prevent the __________ of animals. (MISTREAT)", answer: ["mistreatment"] },
+      { q: "8. The tour package includes flights and __________. (ACCOMMODATE)", answer: ["accommodation"] },
+      { q: "9. __________ requires good balance and strong wind. (WINDSURF)", answer: ["windsurfing"] },
+      { q: "10. Always carry insect __________ when travelling in tropical areas. (REPEL)", answer: ["repellent"] },
+      { q: "11. We followed a __________ route back to the hotel. (CIRCLE)", answer: ["circular"] },
+      { q: "12. National parks provide __________ for endangered species. (PROTECT)", answer: ["protection"] },
+      { q: "13. Tourism can sometimes cause serious __________ in fragile ecosystems. (POLLUTE)", answer: ["pollution"] },
+      { q: "14. The museum is one of the city's most popular tourist __________. (ATTRACT)", answer: ["attraction","attractions"] },
+      { q: "15. This coastal area is environmentally __________ to damage caused by tourism. (SENSE)", answer: ["sensitive"] }
+    ]
+  },
+
+  {
+    id: "v10",
+    title: "V10. Synonym Selection",
+    instructions: "Choose the closest meaning of the highlighted word.",
+    type: "mcq",
+    questions: [
+      { q: "1. The ancient amphitheatre could hold thousands of spectators.", options: ["large open-air venue","modern building","small chapel","underground tunnel"], answer: 0 },
+      { q: "2. The frescoes in the chapel have survived for centuries.", options: ["stone carvings","wall paintings","wooden furniture","glass windows"], answer: 1 },
+      { q: "3. Conservation efforts have helped protect the region's wildlife.", options: ["destruction","construction","protection of nature","exploration"], answer: 2 },
+      { q: "4. The area is considered environmentally sensitive.", options: ["completely indestructible","artificially created","legally protected only","easily damaged by environmental changes"], answer: 3 },
+      { q: "5. Tourists were warned not to litter on the beach.", options: ["leave rubbish","relax","swim","take photographs"], answer: 0 },
+      { q: "6. The animals had been badly mistreated before the rescue.", options: ["cared for","treated cruelly","trained","fed regularly"], answer: 1 },
+      { q: "7. The endangered species is now under strict protection.", options: ["common","domesticated","at risk of dying out","newly discovered"], answer: 2 },
+      { q: "8. They booked their accommodation months in advance.", options: ["flights","tour guide","travel insurance","place to stay"], answer: 3 },
+      { q: "9. The road eventually led to a circular route back to town.", options: ["looping","straight","one-way","blocked"], answer: 0 },
+      { q: "10. There was an inconsistency in his statement to the police.", options: ["confirmation","contradiction","apology","clarification"], answer: 1 }
+    ]
+  }
+];
+
+const container = document.getElementById("quizContainer");
+const letters = ["A","B","C","D"];
+
+quizData.forEach(section => {
+  const sec = document.createElement("section");
+  sec.className = "qsection";
+
+  const titleDiv = document.createElement("div");
+  titleDiv.className = "section-title";
+  titleDiv.textContent = section.title;
+  sec.appendChild(titleDiv);
+
+  if (section.instructions) {
+    const instr = document.createElement("div");
+    instr.className = "section-instructions";
+    instr.textContent = section.instructions;
+    sec.appendChild(instr);
+  }
+
+  const body = document.createElement("div");
+  body.className = "section-body";
+
+  section.questions.forEach((item, qIndex) => {
+    const qId = `${section.id}-${qIndex}`;
+    const qDiv = document.createElement("div");
+    qDiv.className = "question";
+    qDiv.id = `wrap-${qId}`;
+
+    const qText = document.createElement("p");
+    qText.className = "qtext";
+    qText.textContent = item.q;
+    qDiv.appendChild(qText);
+
+    if (section.type === "mcq") {
+      const optsDiv = document.createElement("div");
+      optsDiv.className = "options";
+      item.options.forEach((opt, i) => {
+        const label = document.createElement("label");
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = qId;
+        input.value = letters[i];
+        label.appendChild(input);
+        label.appendChild(document.createTextNode(`${letters[i]}. ${opt}`));
+        optsDiv.appendChild(label);
+      });
+      qDiv.appendChild(optsDiv);
+
+    } else if (section.type === "dropdown") {
+      const select = document.createElement("select");
+      select.id = qId;
+      const blank = document.createElement("option");
+      blank.value = "";
+      blank.textContent = "-- Select --";
+      select.appendChild(blank);
+
+      const opts = section.dropdownOptions;
+      opts.forEach(opt => {
+        const optionEl = document.createElement("option");
+        if (typeof opt === "string") {
+          optionEl.value = opt;
+          optionEl.textContent = opt;
+        } else {
+          optionEl.value = opt.value;
+          optionEl.textContent = opt.label;
+        }
+        select.appendChild(optionEl);
+      });
+      qDiv.appendChild(select);
+
+    } else if (section.type === "text") {
+      const input = document.createElement("input");
+      input.type = "text";
+      input.id = qId;
+      input.autocomplete = "off";
+      qDiv.appendChild(input);
+    }
+
+    const feedback = document.createElement("div");
+    feedback.className = "feedback";
+    feedback.id = `fb-${qId}`;
+    qDiv.appendChild(feedback);
+
+    body.appendChild(qDiv);
+  });
+
+  sec.appendChild(body);
+  container.appendChild(sec);
+});
+
+function normalize(str){
+  return (str || "").toString().trim().toLowerCase().replace(/\s+/g," ");
+}
+
+function checkAnswers(){
+  let total = 0, earned = 0;
+  const sectionScores = [];
+
+  quizData.forEach(section => {
+    let secEarned = 0;
+    const secTotal = section.questions.length;
+
+    section.questions.forEach((item, qIndex) => {
+      total++;
+      const qId = `${section.id}-${qIndex}`;
+      const qDiv = document.getElementById(`wrap-${qId}`);
+      const fb = document.getElementById(`fb-${qId}`);
+      let isCorrect = false;
+      let correctLabel = "";
+
+      if (section.type === "mcq") {
+        const selected = document.querySelector(`input[name="${qId}"]:checked`);
+        const correctLetter = letters[item.answer];
+        correctLabel = `${correctLetter}. ${item.options[item.answer]}`;
+        if (selected && selected.value === correctLetter) isCorrect = true;
+
+      } else if (section.type === "dropdown") {
+        const select = document.getElementById(qId);
+        const val = select ? select.value : "";
+        isCorrect = normalize(val) === normalize(item.answer);
+        const opts = section.dropdownOptions;
+        const match = opts.find(o => (typeof o === "string" ? o : o.value) === item.answer);
+        correctLabel = typeof match === "string" ? match : (match ? match.label : item.answer);
+
+      } else if (section.type === "text") {
+        const input = document.getElementById(qId);
+        const val = normalize(input ? input.value : "");
+        isCorrect = item.answer.some(a => normalize(a) === val);
+        correctLabel = item.answer.join(" / ");
+      }
+
+      qDiv.classList.remove("correct","incorrect");
+      if (isCorrect) {
+        qDiv.classList.add("correct");
+        fb.textContent = "✓ Correct";
+        earned++; secEarned++;
+      } else {
+        qDiv.classList.add("incorrect");
+        fb.textContent = `✗ Correct answer: ${correctLabel}`;
+      }
+    });
+
+    sectionScores.push(`${section.title.split(".")[0]}: ${secEarned}/${secTotal}`);
+  });
+
+  const pct = Math.round((earned/total)*100);
+  const scoreBox = document.getElementById("scoreBox");
+  scoreBox.style.display = "block";
+  scoreBox.innerHTML = `Score: ${earned} / ${total} (${pct}%)<div class="sub">${sectionScores.join(" &nbsp;|&nbsp; ")}</div>`;
+  scoreBox.scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+function resetQuiz(){
+  document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+  document.querySelectorAll('select').forEach(s => s.value = "");
+  document.querySelectorAll('input[type="text"]').forEach(t => t.value = "");
+  document.querySelectorAll('.question').forEach(q => q.classList.remove("correct","incorrect"));
+  document.getElementById("scoreBox").style.display = "none";
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+document.getElementById("checkBtn").addEventListener("click", checkAnswers);
+document.getElementById("resetBtn").addEventListener("click", resetQuiz);
+</script>
+
+</body>
+</html>
