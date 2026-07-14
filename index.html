@@ -106,6 +106,9 @@ const STUDENTS = {
       detailField: "Sections & Notes", // column in the "Unit Details" tab
       boxTitle: "📘 Grammar — this unit",
     },
+    resources: [
+      { label: "Unit 1 Vocabulary Test", url: "exercises/unit1-vocabulary-test-v2.html" },
+    ],
   },
   tra_math: {
     sheetId: "1CJPbrTrjw5RweB7hrA-AnV4lnNYdpl4qzUuJ4ZlTUyk",
@@ -355,6 +358,7 @@ function render(){
   const tabsDef = [["units","Unit Plans"]];
   if (SUBJECT_TRACK.enabled) tabsDef.push(["grammar", SUBJECT_TRACK.tabLabel]);
   tabsDef.push(["sessions","Session Notes"], ["parent","Parent View"]);
+  if (STUDENT.resources && STUDENT.resources.length) tabsDef.push(["resources","Resources"]);
   const tabsEl = document.getElementById("tabs");
   let activeTab = window.__activeTab || "units";
   if (!tabsDef.some(([key]) => key === activeTab)) activeTab = "units";
@@ -371,6 +375,7 @@ function render(){
   else if (activeTab === "grammar") renderGrammar(content, grammar);
   else if (activeTab === "sessions") renderSessions(content, sessions);
   else if (activeTab === "parent") renderParent(content, tracker);
+  else if (activeTab === "resources") renderResources(content, STUDENT.resources);
 }
 
 function renderUnits(content, tracker, details, sessions){
@@ -493,6 +498,12 @@ function renderSessions(content, sessions){
         ${s["Homework / Next Steps"]?`<div class="notes" style="color:#7C3AED"><b>Homework:</b> ${s["Homework / Next Steps"]}</div>`:""}
       </div>`));
     });
+  });
+}
+
+function renderResources(content, resources){
+  resources.forEach(r => {
+    content.appendChild(el(`<a href="${r.url}" target="_blank" rel="noopener" class="card" style="display:block;padding:14px 18px;text-decoration:none;color:inherit;font-weight:700;font-size:14px">📄 ${r.label}</a>`));
   });
 }
 
